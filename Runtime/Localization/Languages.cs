@@ -1,0 +1,128 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+using Yurowm.Extensions;
+
+namespace Yurowm.Localizations {
+    /// <summary>
+    /// 0-999 - clone of UnityEngine.SystemLanguage,
+    /// 1000+ - your own languages
+    /// </summary>
+    public enum Language {
+        Afrikaans = 0,
+        Arabic = 1,
+        Basque = 2,
+        Belarusian = 3,
+        Bulgarian = 4,
+        Catalan = 5,
+        Chinese = 6,
+        Czech = 7,
+        Danish = 8,
+        Dutch = 9,
+        English = 10,
+        Estonian = 11,
+        Faroese = 12,
+        Finnish = 13,
+        French = 14,
+        German = 15,
+        Greek = 16,
+        Hebrew = 17,
+        Hungarian = 18,
+        Icelandic = 19,
+        Indonesian = 20,
+        Italian = 21,
+        Japanese = 22,
+        Korean = 23,
+        Latvian = 24,
+        Lithuanian = 25,
+        Norwegian = 26,
+        Polish = 27,
+        Portuguese = 28,
+        Romanian = 29,
+        Russian = 30,
+        SerboCroatian = 31,
+        Slovak = 32,
+        Slovenian = 33,
+        Spanish = 34,
+        Swedish = 35,
+        Thai = 36,
+        Turkish = 37,
+        Ukrainian = 38,
+        Vietnamese = 39,
+        ChineseSimplified = 40,
+        ChineseTraditional = 41,
+        Hindi = 42,
+        Unknown = 43,
+        Azerbaijanian = 1001,
+        Armenian = 1002,
+        Georgian = 1003,
+        Kazakh = 1004,
+        Kyrgyz = 1005,
+        Turkmen = 1006,
+        Tajick = 1007,
+        Uzbek = 1008,
+    }
+    
+    public static class LanguageTools {
+        static readonly Dictionary<Language, string> shortCodes = new() {
+            { Language.Afrikaans, "af" },
+            { Language.Arabic, "ar" },
+            { Language.Basque, "eu" },
+            { Language.Belarusian, "be" },
+            { Language.Bulgarian, "bg" },
+            { Language.Catalan, "ca" },
+            { Language.Chinese, "zh" },
+            { Language.Czech, "cs" },
+            { Language.Danish, "da" },
+            { Language.Dutch, "nl" },
+            { Language.English, "en" },
+            { Language.Estonian, "et" },
+            { Language.Faroese, "fo" },
+            { Language.Finnish, "fi" },
+            { Language.French, "fr" },
+            { Language.German, "de" },
+            { Language.Greek, "el" },
+            { Language.Hebrew, "he" },
+            { Language.Hungarian, "hu" },
+            { Language.Icelandic, "is" },
+            { Language.Indonesian, "id" },
+            { Language.Italian, "it" },
+            { Language.Japanese, "ja" },
+            { Language.Korean, "ko" },
+            { Language.Latvian, "lv" },
+            { Language.Lithuanian, "lt" },
+            { Language.Norwegian, "no" },
+            { Language.Polish, "pl" },
+            { Language.Portuguese, "pt" },
+            { Language.Romanian, "ro" },
+            { Language.Russian, "ru" },
+            { Language.SerboCroatian, "sh" },
+            { Language.Slovak, "sk" },
+            { Language.Slovenian, "sl" },
+            { Language.Spanish, "es" },
+            { Language.Swedish, "sv" },
+            { Language.Thai, "th" },
+            { Language.Turkish, "tr" },
+            { Language.Ukrainian, "uk" },
+            { Language.Vietnamese, "vi" },
+            { Language.ChineseSimplified, "zh-CN" },
+            { Language.ChineseTraditional, "zh" },
+            { Language.Hindi, "hi" },
+            { Language.Azerbaijanian, "az" },
+            { Language.Armenian, "hy" },
+            { Language.Georgian, "ka" },
+            { Language.Kazakh, "kk" },
+            { Language.Kyrgyz, "ky" },
+            { Language.Turkmen, "tk" },
+            { Language.Tajick, "tg" },
+            { Language.Uzbek, "uz" },
+        };
+
+        public static string GetShortCode(this Language language) => shortCodes.GetValueOrDefault(language);
+
+        public static Language GetLanguage(string shortCode) {
+            if (shortCodes.ContainsValue(shortCode))
+                return shortCodes.GetKey(shortCode);
+            return Language.Unknown;
+        }
+    }
+}

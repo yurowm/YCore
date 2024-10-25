@@ -1,0 +1,14 @@
+{
+  "name": "com.yurowm.core",
+  "version": "1.0.0",
+  "displayName": "YCore",
+  "description": "",
+  "unity": "2022.1",
+  "dependencies": {  },
+  "keywords": [ ],
+  "author": {
+    "name": "Yurov Viktor",
+    "email": "yurowm@gmail.com",
+    "url": "https://t.me/yurowm/"
+  }
+}

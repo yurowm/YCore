@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17a7b62a07ada43a88f1555e01bc6ff1, type: 3}
+  m_Name: Triangle
+  m_EditorClassIdentifier: 
+  meshData:
+    Scale: 1
+    vertices:
+    - {x: -50, y: 50}
+    - {x: 50, y: 50}
+    - {x: -50, y: -50}
+    - {x: 50, y: 48.585785}
+    - {x: -48.585785, y: -50}
+    colors: []
+    triangles: 000000000100000002000000010000000300000004000000010000000400000002000000
+    uv0:
+    - {x: 0, y: 0.5003273}
+    - {x: 0, y: 1}
+    - {x: 0, y: 0}
+    - {x: 1, y: 0.9929289}
+    - {x: 1, y: 0.0070711374}
+    uv1:
+    - {x: 0, y: 0}
+    - {x: 0, y: 0}
+    - {x: 0, y: 0}
+    - {x: 0, y: 0}
+    - {x: 0, y: 0}
+    borders:
+    - points: 0100000003000000040000000200000000000000
+      directions:
+      - {x: 1, y: 1}
+      - {x: 1, y: -0.41421357}
+      - {x: 0.41421357, y: -1}
+      - {x: -1, y: -1}
+      - {x: -1, y: 1}
