@@ -79,16 +79,6 @@ namespace Yurowm.Extensions {
             return false;
         }
 
-        public static List<T> SortBy<T>(this List<T> list, Func<T, int> comparer) {
-            list.Sort((x, y) => comparer(x).CompareTo(comparer(y)));
-            return list;
-        }
-
-        public static List<T> SortDescendingBy<T>(this List<T> list, Func<T, int> comparer) {
-            list.Sort((x, y) => comparer(y).CompareTo(comparer(x)));
-            return list;
-        }
-
         public static T GetNextByLoop<T>(this IList<T> collection, T current) {
             var index = collection.IndexOf(current) + 1;
 
