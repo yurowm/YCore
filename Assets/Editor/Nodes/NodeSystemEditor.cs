@@ -36,6 +36,30 @@ namespace Yurowm.Nodes.Editor {
         
         public void OnGUI(params GUILayoutOption[] options) {
             
+            if (Event.current != null)
+                if (canvasViewRect.Contains(Event.current.mousePosition))
+                    mousePosition = Event.current.mousePosition - position - canvasViewRect.position;
+
+            if (GUIUtility.keyboardControl == 0) {
+                if (Event.current.keyCode == KeyCode.Backspace) {
+                    focusedNodes
+                        .ToArray()
+                        .ForEach(nd => RemoveNode(nd.node));
+                    Repaint();
+                }
+                if (Event.current.command) {
+                    if (Event.current.keyCode == KeyCode.C) {
+                        nodeReference = focusedNodes
+                            .Select(nd => nd.node)
+                            .ToArray();
+                    }
+                    if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.V) {
+                        Paste();
+                        Repaint();
+                    }
+                }
+            }
+
             using (GUIHelper.Horizontal.Start(options))
                 UpdateViewRect(
                     EditorGUILayout.GetControlRect(
@@ -97,6 +121,8 @@ namespace Yurowm.Nodes.Editor {
             onViewRectUpdate?.Invoke();
         }
 
+        Vector2 mousePosition;
+        
         public Vector2 position;
         public Vector2 cameraPosition {
             get => canvasViewRect.size / 2 - position;
@@ -248,21 +274,8 @@ namespace Yurowm.Nodes.Editor {
             }
             
             if (!nodeReference.IsEmpty())
-                if (supportedTypes.Any(t => nodeReference.Any(t.IsInstanceOfType))) {
-                    var toPaste = nodeReference
-                        .Where(n => supportedTypes.Any(t => t.IsInstanceOfType(n)))
-                        .ToArray();
-                    
-                    var startPosition = toPaste.First().position;
-                    
-                    menu.AddItem(new GUIContent("Paste"), false, () => {
-                        foreach (var nodeRef in toPaste) {
-                            var node = nodeRef.Clone();
-                            AddNode(node);
-                            node.position = grid.Snap(position - startPosition + nodeRef.position);
-                        }
-                    });
-                }
+                if (supportedTypes.Any(t => nodeReference.Any(t.IsInstanceOfType)))
+                    menu.AddItem(new GUIContent("Paste"), false, Paste);
 
             #endregion
             
@@ -273,6 +286,22 @@ namespace Yurowm.Nodes.Editor {
 
             if (menu.GetItemCount() > 0)
                 menu.ShowAsContext();
+        }
+        
+        void Paste() {
+            var supportedTypes = nodeSystem.GetSupportedNodeTypes().ToArray();
+            
+            var toPaste = nodeReference
+                .Where(n => supportedTypes.Any(t => t.IsInstanceOfType(n)))
+                .ToArray();
+                    
+            var startPosition = toPaste.First().position;
+
+            foreach (var nodeRef in toPaste) {
+                var node = nodeRef.Clone();
+                AddNode(node);
+                node.position = grid.Snap(mousePosition - startPosition + nodeRef.position);
+            }
         }
         
         void GoToCenter() {

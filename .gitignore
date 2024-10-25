@@ -36,3 +36,4 @@ Assets/Plugins/Editor/JetBrains/
 
 \.gradle/
 .DS_Store
+*.dwlt
