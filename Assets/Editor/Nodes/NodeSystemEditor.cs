@@ -473,6 +473,47 @@ namespace Yurowm.Nodes.Editor {
             SetDirty();
         }
         
+        public void Transform(Node from, Node to) {
+            if (from == null) return;
+            if (to == null) return;
+            
+            var indexA = nodeSystem.nodes.IndexOf(from);
+            var indexB = nodeSystem.nodes.IndexOf(to);
+            
+            if (indexA < 0 || indexB >= 0)
+                return;
+            
+            var portsA = from.CollectPorts().ToArray();
+            var portsB = to.CollectPorts().ToArray();
+            
+            if (portsA.Length != portsB.Length) return;
+            
+            var validation = portsB
+                .Zip(portsB, (a, b) => a.ID == b.ID && a.info == b.info)
+                .All(r => r);
+            
+            if (!validation) return;
+            
+            to.ID = from.ID;
+            to.position = from.position;
+
+            foreach (var connection in nodeSystem.connections) {
+                for (int i = 0; i < portsA.Length; i++) {
+                    var port = portsA[i];
+                    if (connection.a == port) connection.a = portsB[i];
+                    if (connection.b == port) connection.b = portsB[i];
+                }
+            }
+            
+            nodeSystem.nodes.RemoveAt(indexA);
+            nodeSystem.nodes.Insert(indexA, to);
+
+            nodeDrawers.Remove(from);
+            nodeDrawers.Add(to, new NodeDrawer(to, this));
+            
+            SetDirty();
+        }
+        
         int GetNewNodeID() {
             if (nodeSystem.nodes.Count == 0)
                 return 0;
