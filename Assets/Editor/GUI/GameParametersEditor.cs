@@ -18,7 +18,7 @@ namespace Yurowm.YPlanets.Editor {
             }
         }
 
-        [MenuItem("Yurowm/Tools/Wipe Data")]
+        [MenuItem("Tools/Yurowm/Tools/Wipe Data")]
         public static void WipeData() {
             var directory = new DirectoryInfo(Application.persistentDataPath);
             if (directory.Exists)

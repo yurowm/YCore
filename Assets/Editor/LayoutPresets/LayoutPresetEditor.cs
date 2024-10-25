@@ -10,7 +10,7 @@ namespace Yurowm.UI {
     [CustomEditor(typeof(LayoutPreset<,>), true)]
     public class LayoutPresetEditor : Editor {
         
-        [MenuItem("Yurowm/Tools/Apply all Layout Presets")]
+        [MenuItem("Tools/Yurowm/Tools/Apply all Layout Presets")]
         static void ApplyAll() {
             FindObjectsOfType<LayoutPreset>(true)
                 .ForEach(p => p.OnScreenResize());

@@ -42,7 +42,7 @@ namespace Yurowm.Spaces {
         ViewMode viewMode = ViewMode.Items;
         EditMode editMode = EditMode.None;
         
-        [MenuItem("Yurowm/Tools/Live Context")]
+        [MenuItem("Tools/Yurowm/Tools/Live Context")]
         public static LiveContextViewer Create() {
             var window = GetWindow<LiveContextViewer>();
             window.Show();

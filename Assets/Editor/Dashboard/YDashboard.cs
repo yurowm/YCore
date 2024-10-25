@@ -40,7 +40,7 @@ namespace Yurowm.Dashboard {
             style_IsInitialized = true;
         }
 
-        [MenuItem("Yurowm/Dashboard")]
+        [MenuItem("Tools/Yurowm/Dashboard")]
         public static YDashboard Create() {
             YDashboard window;
             if (instance == null) {

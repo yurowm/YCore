@@ -91,27 +91,27 @@ namespace Yurowm {
         }
 
         
-        [MenuItem("Yurowm/Screenshot/Create x1 %1")]
+        [MenuItem("Tools/Yurowm/Screenshot/Create x1 %1")]
         static void Shot1() {
             Shot(1).Run();
         }
             
-        [MenuItem("Yurowm/Screenshot/Create x2 %2")]
+        [MenuItem("Tools/Yurowm/Screenshot/Create x2 %2")]
         static void Shot2() {
             Shot(2).Run();
         }
 
-        [MenuItem("Yurowm/Screenshot/Create x5 %5")]
+        [MenuItem("Tools/Yurowm/Screenshot/Create x5 %5")]
         static void Shot5() {
             Shot(5).Run();
         }
 
-        [MenuItem("Yurowm/Screenshot/Create x10 %0")]
+        [MenuItem("Tools/Yurowm/Screenshot/Create x10 %0")]
         static void Shot10() {
             Shot(10).Run();
         }
 
-        [MenuItem("Yurowm/Screenshot/Apple App Store")]
+        [MenuItem("Tools/Yurowm/Screenshot/Apple App Store")]
         static void ShotForAppStore() {
             var orders = new List<Order> {
                 new Order { name = "iPhone_6.7", resolution = new int2(1290, 2796) },
