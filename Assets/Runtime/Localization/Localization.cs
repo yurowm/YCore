@@ -8,11 +8,12 @@ using System.Linq;
 using Yurowm.Console;
 using Yurowm.Coroutines;
 using Yurowm.DebugTools;
-using Yurowm.Serialization;
 using Yurowm.Extensions;
 using Yurowm.Integrations;
+using Yurowm.Serialization;
 using Yurowm.UI;
 using Yurowm.Utilities;
+using Yurowm.YJSONSerialization;
 
 namespace Yurowm.Localizations {
     public static class Localization {
@@ -179,7 +180,7 @@ namespace Yurowm.Localizations {
     }
     
     public class LanguageContent : ISerializable, IEnumerable<KeyValuePair<string, string>> {
-        static readonly string iniFileName = "list" + Serializator.FileExtension;
+        static readonly string iniFileName = "list" + Serializer.FileExtension;
         Dictionary<string, string> content = new();
         public Language language;
 
@@ -234,7 +235,7 @@ namespace Yurowm.Localizations {
                 var directory = new DirectoryInfo(Path.Combine(Application.streamingAssetsPath, "Languages"));
                 if (!directory.Exists) directory.Create();
                 var files = Directory.GetFiles(directory.FullName)
-                    .Select(p => new FileInfo(p)).Where(f => f.Extension == Serializator.FileExtension).ToArray();
+                    .Select(p => new FileInfo(p)).Where(f => f.Extension == Serializer.FileExtension).ToArray();
                 if (files.Length > 0) {
                     foreach (var file in files) {
                         if (Enum.TryParse(file.NameWithoutExtension(), out Language language))
@@ -267,7 +268,7 @@ namespace Yurowm.Localizations {
         public static IEnumerator LoadProcess(Language language, Action<LanguageContent> getResult, bool createNew) {
             string raw = null;
             yield return TextData.LoadTextRoutine(
-                Path.Combine("Languages", language + Serializator.FileExtension),
+                Path.Combine("Languages", language + Serializer.FileExtension),
                 r => raw = r);
             
             var result = Load(raw, language, createNew);
@@ -276,7 +277,7 @@ namespace Yurowm.Localizations {
         }
 
         public static LanguageContent LoadFast(Language language, bool createNew) {
-            var raw = TextData.LoadTextInEditor(Path.Combine("Languages", language + Serializator.FileExtension));
+            var raw = TextData.LoadTextInEditor(Path.Combine("Languages", language + Serializer.FileExtension));
             return Load(raw, language, createNew);
         }
 
@@ -284,8 +285,7 @@ namespace Yurowm.Localizations {
             if (raw.IsNullOrEmpty())
                 return createNew ? CreateEmpty() : null;
 
-            LanguageContent result = new LanguageContent();
-            Serializator.FromTextData(result, raw);
+            var result = Serializer.FromJson<LanguageContent>(raw) ?? new ();
             result.language = language;
             return result;
         }

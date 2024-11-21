@@ -25,6 +25,7 @@ using Yurowm.ObjectEditors;
 using Yurowm.Serialization;
 using Yurowm.Services;
 using Yurowm.Utilities;
+using Yurowm.YJSONSerialization;
 
 namespace Yurowm.Localizations {
     [DashboardGroup("UI")]
@@ -515,8 +516,8 @@ namespace Yurowm.Localizations {
         }
 
         public static void SaveContent(LanguageContent content) {
-            var raw = Serializator.ToTextData(content, true);
-            TextData.SaveText(Path.Combine("Languages", content.language + Serializator.FileExtension), raw);
+            var raw = content.ToJson();
+            TextData.SaveText(Path.Combine("Languages", content.language + Serializer.FileExtension), raw);
         }
 
         public static void Edit(string _search = "") {
