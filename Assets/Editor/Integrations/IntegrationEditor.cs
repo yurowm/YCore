@@ -6,6 +6,7 @@ namespace Yurowm.Integrations {
 
         public override void OnGUI(Integration integration, object context = null) {
             integration.active = EditorGUILayout.Toggle("Active", integration.active);
+            integration.name = EditorGUILayout.TextField("Name", integration.name);
             var issues = integration.GetIssues();
             if (issues.HasFlag(Integration.Issue.SDK))
                 EditorGUILayout.HelpBox("SDK isn't installed", MessageType.Error, false);

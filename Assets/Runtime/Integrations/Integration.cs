@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Linq;
 using UnityEngine;
+using Yurowm.Coroutines;
 using Yurowm.Extensions;
 using Yurowm.Localizations;
 using Yurowm.Serialization;
@@ -16,15 +17,18 @@ namespace Yurowm.Integrations {
         public const int INITIALIZE_ORDER = -900;
         
         public string platformExpression { get; set; }
+        
+        public string name;
 
         [OnLaunch(INITIALIZE_ORDER)]
         public static IEnumerator InitializeOnLoad() {
-            if (OnceAccess.GetAccess("Integration"))
-                foreach (var integration in storage.items) {
-                    if (!integration.active || integration.HasIssues())
-                        continue;
-                    yield return integration.Initialize();
-                }
+            if (!OnceAccess.GetAccess("Integration")) yield break;
+            
+            yield return storage.items
+                .Where(i => i.active && i.AvailabilityFilter())
+                .ToArray()
+                .Select(i => i.Initialize())
+                .Parallel();
         }
         
         public bool active = true;
@@ -36,7 +40,7 @@ namespace Yurowm.Integrations {
         public abstract string GetName();
 
         public static I Get<I>() where I : Integration {
-            return storage.Items<I>().FirstOrDefault(i => i.active && !i.HasIssues());
+            return storage.Items<I>().FirstOrDefault(i => i.active && i.AvailabilityFilter());
         }
         
         public static T CastOne<T>() {
@@ -59,11 +63,13 @@ namespace Yurowm.Integrations {
 
         public virtual void Serialize(IWriter writer) {
             writer.Write("active", active);
+            writer.Write("name", name);
             PlatformExpression.Serialize(writer, this);
         }
 
         public virtual void Deserialize(IReader reader) {
             reader.Read("active", ref active);
+            reader.Read("name", ref name);
             PlatformExpression.Deserialize(reader, this);
         }
         
