@@ -9,10 +9,10 @@ using Yurowm.Serialization;
 using Yurowm.Utilities;
 
 namespace Yurowm.Core {
-    public class UserPath : NodeSystem, ISerializableID {
+    public class UserPath : NodeSystem, ISerializableID, ILocalized {
         
         [PreloadStorage]
-        public static Storage<UserPath> storage = new("UserPath", TextCatalog.StreamingAssets);
+        public static Storage<UserPath> storage = new Storage<UserPath>("UserPath", TextCatalog.StreamingAssets);
         
         [OnLaunch(1)]
         static void Initialize() {
@@ -38,9 +38,18 @@ namespace Yurowm.Core {
             base.Serialize(writer);
         }
 
-        public override void Deserialize(IReader reader) {
+        public void Deserialize(Reader reader) {
             ID = reader.Read<string>("ID");
             base.Deserialize(reader);
+        }
+        
+        [LocalizationKeysProvider]
+        static IEnumerable GetKeys() {
+            return storage.items.CastIfPossible<ILocalized>();
+        }
+        
+        public IEnumerable GetLocalizationKeys() {
+            return nodes.CastIfPossible<ILocalized>();
         }
         
         public class AppEvent : UserPathSource {
