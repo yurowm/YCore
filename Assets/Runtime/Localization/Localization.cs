@@ -208,7 +208,7 @@ namespace Yurowm.Localizations {
         }
 
         public void Serialize(IWriter writer) {
-            writer.Write("content", content.OrderBy(p => p.Key).ToDictionary());
+            writer.WriteDictionary("content", content.OrderBy(p => p.Key).ToDictionary());
         }
         
         #region Supported Languages
