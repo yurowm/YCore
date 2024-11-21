@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-#if MXPARSER
 using org.mariuszgromada.math.mxparser;
-#endif
 using UnityEngine;
 using Yurowm.Extensions;
 using Yurowm.Integrations;
@@ -62,7 +60,6 @@ namespace Yurowm {
             if (exprssion.IsNullOrEmpty())
                 return true;
             
-            #if MXPARSER
             try {
                 if (values == null)
                     BuildValues();
@@ -80,9 +77,6 @@ namespace Yurowm {
                 Debug.LogException(e);
                 return false;
             }
-            #else
-            Debug.LogError("Platform expression feature requires MXParser library");
-            #endif
             
             return true;
         }

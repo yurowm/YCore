@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-#if MXPARSER
 using org.mariuszgromada.math.mxparser;
-#endif
 using UnityEngine;
 
 namespace Yurowm.UI {
@@ -39,7 +37,6 @@ namespace Yurowm.UI {
 
             var result = false;
             
-            #if MXPARSER
             try {
                 var exp = new Expression(expression, arguments.Select(i => i.Value).ToArray());
                 result = exp.calculate() == 1;
@@ -48,7 +45,6 @@ namespace Yurowm.UI {
                 Debug.LogException(e);
                 result = false;
             }
-            #endif
             
             AllTargets(result);
         }
@@ -86,7 +82,6 @@ namespace Yurowm.UI {
             public string name;
             public string reference;
             
-            #if MXPARSER
             public Argument value;
 
             public Argument Value {
@@ -112,7 +107,6 @@ namespace Yurowm.UI {
                     value.setArgumentValue(argumentValue);
                 }
             }
-            #endif
         }
     }
 

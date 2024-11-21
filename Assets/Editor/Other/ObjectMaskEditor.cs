@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-#if MXPARSER
 using org.mariuszgromada.math.mxparser;
 using org.mariuszgromada.math.mxparser.parsertokens;
-#endif
 using UnityEditor;
 using UnityEngine;
 using Yurowm.GUIHelpers;
@@ -21,9 +19,7 @@ namespace Yurowm.UI {
 		SerializedProperty allChildSP;
 		SerializedProperty expressionSP;
 		
-		#if MXPARSER
 		Expression expression;
-		#endif
 		
 		void OnEnable() {
 			main = (ObjectMask) target;
@@ -38,7 +34,6 @@ namespace Yurowm.UI {
 		
 		List<string> unkownArguments = new List<string>();
 		void OnChangeExpression() {
-			#if MXPARSER
 			expression = new Expression(main.expression);
 			
 			unkownArguments.Clear();
@@ -58,16 +53,11 @@ namespace Yurowm.UI {
 					name = argument
 				});
 			}
-			#endif
 		}
 
 		public override void OnInspectorGUI() {
 			Undo.RecordObject(main, "ItemMask changes");
 
-			#if !MXPARSER
-			EditorGUILayout.HelpBox("mXParser is not installed. The component will not work.", MessageType.Error, false);
-			#endif
-			
 			using (GUIHelper.Change.Start(OnChangeExpression))
 				EditorGUILayout.PropertyField(expressionSP);
 
