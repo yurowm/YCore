@@ -386,7 +386,7 @@ namespace Yurowm.Localizations {
             var builder = new StringBuilder();
             
             foreach (var pair in content)
-                builder.AppendLine($"{pair.Key} {pair.Value}");
+                builder.AppendLine($"{pair.Key}\t{pair.Value}");
 
             GUIUtility.systemCopyBuffer = builder.ToString();
         }

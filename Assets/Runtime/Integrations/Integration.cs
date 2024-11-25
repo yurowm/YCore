@@ -19,6 +19,9 @@ namespace Yurowm.Integrations {
         public string platformExpression { get; set; }
         
         public string name;
+        
+        static bool isInitialized = false;
+        static Action<Integration> onInitialize = delegate {};
 
         [OnLaunch(INITIALIZE_ORDER)]
         public static IEnumerator InitializeOnLoad() {
@@ -29,6 +32,12 @@ namespace Yurowm.Integrations {
                 .ToArray()
                 .Select(i => i.Initialize())
                 .Parallel();
+            
+            isInitialized = true;
+            
+            storage.items
+                .Where(i => i.active && i.AvailabilityFilter())
+                .ForEach(i => onInitialize(i));
         }
         
         public bool active = true;
@@ -49,14 +58,22 @@ namespace Yurowm.Integrations {
                 .Where(i => i.active && !i.HasIssues())
                 .CastOne<T>();
         }
-
-        public static void Catch<I>(Action<I> action) where I : Integration {
+        
+        public static void Catch<I>(Func<I, bool> action) where I : Integration {
             if (action == null)
                 return;
             
-            var integration = Get<I>();
-            if (integration != null)
-                action.Invoke(integration);
+            if (isInitialized) {
+                foreach (var integration in storage.items.CastIfPossible<I>())
+                    if (action(integration))
+                        return;
+            } else {
+                void OnInitialize(Integration integration) {
+                    if (integration is I i && action(i)) 
+                        onInitialize -= OnInitialize;
+                }
+                onInitialize += OnInitialize;
+            }
         }
         
         #region ISerializable
