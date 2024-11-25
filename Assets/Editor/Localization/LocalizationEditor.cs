@@ -307,6 +307,7 @@ namespace Yurowm.Localizations {
                     
                     menu.AddItem(new GUIContent("Get Missed Keys"), false, GetMissedKeys);
                     
+                    menu.AddItem(new GUIContent("Tasks/Export (Spreadsheet)"), false, TasksExportSpreadsheet);
                     menu.AddItem(new GUIContent("Tasks/Export"), false, TasksExport);
                     menu.AddItem(new GUIContent("Tasks/Import"), false, TasksImport);
 
@@ -375,6 +376,21 @@ namespace Yurowm.Localizations {
 
         #region Export/Import Tasks
 
+        void TasksExportSpreadsheet() {
+            if (language == null) return;
+            
+            var content = LanguageContent.LoadFast(language.Value, false);
+            
+            if (content == null) return;
+
+            var builder = new StringBuilder();
+            
+            foreach (var pair in content)
+                builder.AppendLine($"{pair.Key} {pair.Value}");
+
+            GUIUtility.systemCopyBuffer = builder.ToString();
+        }
+        
         void TasksExport() {
             var referenceContent = LanguageContent.LoadFast(Language.English, false);;
             
