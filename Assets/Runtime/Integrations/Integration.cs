@@ -59,6 +59,16 @@ namespace Yurowm.Integrations {
                 .CastOne<T>();
         }
         
+        public static void Catch<I>(Action<I> action) where I : Integration {
+            if (action == null)
+                return;
+
+            Catch<I>(i => {
+                action(i);
+                return true;
+            });
+        }
+        
         public static void Catch<I>(Func<I, bool> action) where I : Integration {
             if (action == null)
                 return;

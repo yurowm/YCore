@@ -62,6 +62,7 @@ namespace Yurowm.UI {
         }
 
         public static object Get(string key) {
+            if (key.IsNullOrEmpty()) return 0;
             return references.ContainsKey(key) ? references[key]().value : 0;
         }
         

@@ -93,7 +93,8 @@ namespace Yurowm.UI {
             
             double argumentValue {
                 get {
-                    if (double.TryParse(ReferenceValues.Get(reference).ToString(), out var result))
+                    var data = ReferenceValues.Get(reference)?.ToString();
+                    if (data != null && double.TryParse(data.ToString(), out var result))
                         return result;
                     return 0;
                 }
