@@ -1,11 +1,11 @@
 {
   "name": "com.yurowm.core",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "displayName": "YCore",
   "description": "",
   "unity": "2022.1",
   "dependencies": { 
-    "com.cysharp.unitask": "1.0.0"
+    "com.cysharp.unitask": "2.5.10"
   },
   "keywords": [ ],
   "author": {
