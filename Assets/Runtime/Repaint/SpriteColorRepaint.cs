@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
@@ -13,7 +14,7 @@ namespace Yurowm.Colors {
 
         public override void SetColor(Color color) {
             if (fadeDuration > 0 && gameObject.activeInHierarchy) {
-                SetColorFade(color).Run();
+                SetColorFade(color).Forget();
                 return;
             }
             
@@ -23,9 +24,9 @@ namespace Yurowm.Colors {
             spriteRenderer.color = TransformColor(color);
         }
         
-        IEnumerator SetColorFade(Color color) {
+        async UniTask SetColorFade(Color color) {
             if (!spriteRenderer && !this.SetupComponent(out spriteRenderer))
-                yield break;
+                return;
             
             var currentColor = GetColor();
             
@@ -33,7 +34,7 @@ namespace Yurowm.Colors {
             
             for (var t = 0f; t < 1f; t += Time.unscaledDeltaTime / fadeDuration) {
                 spriteRenderer.color = Color.Lerp(currentColor, color, t);
-                yield return null;
+                await UniTask.Yield();
             }
 
             spriteRenderer.color = color;

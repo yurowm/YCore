@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -45,10 +46,10 @@ namespace Yurowm.DebugTools {
             
             GameSettings.ExecuteOnLoad(s => Instance.gameObject.SetActive(s.GetModule<DebugSettings>().DebugPanel));
             
-            ShowPass().Run();
+            ShowPass().Forget();
         }
         
-        static IEnumerator ShowPass() {
+        static async UniTask ShowPass() {
             var clicks = 0;
 
             int GetPassNum() {
@@ -65,22 +66,22 @@ namespace Yurowm.DebugTools {
             
             while (true) {
                 clicks = 0;
-                yield return null;
+                await UniTask.Yield();
 
                 while (GetPassNum() >= 1) {
                     
                     if (GetPassNum() >= 3) {
                         clicks ++;
                         while (GetPassNum() >= 3)
-                            yield return null;
+                            await UniTask.Yield();
                     }
-                    
+                            
                     if (clicks >= 10) {
                         Instance.gameObject.SetActive(true);
                         break;
                     }
                     
-                    yield return null;
+                    await UniTask.Yield();
                 }
             }
             
@@ -173,11 +174,11 @@ namespace Yurowm.DebugTools {
             GameSettings.ExecuteOnLoad(i => i.GetModule<DebugSettings>().DebugPanel = false);
         }
         
-        IEnumerator CloseFor5Seconds() {
+        async UniTask CloseFor5Seconds() {
             SetLock(true);
             gameObject.SetActive(false);
             
-            yield return new Wait(5);
+            await UniTask.WaitForSeconds(5);
             
             gameObject.SetActive(true);
         }
@@ -292,7 +293,7 @@ namespace Yurowm.DebugTools {
             hideAllButton?.onClick.SetSingleListner(() => ExpandAll(false));
             closeButton?.onClick.SetSingleListner(Close);
             closePasswordButton?.onClick.SetSingleListner(Close);
-            close5Button?.onClick.SetSingleListner(() => CloseFor5Seconds().Run());
+            close5Button?.onClick.SetSingleListner(() => CloseFor5Seconds().Forget());
             submitPasswordButton?.onClick.SetSingleListner(SubmitPassword);
         }
 

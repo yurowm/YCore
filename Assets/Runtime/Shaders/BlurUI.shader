@@ -1,11 +1,16 @@
-﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-Shader "Yurowm/Blur UI" {
+﻿Shader "Yurowm/Blur UI" {
     Properties {
-        _Color ("Main Color", Color) = (1,1,1,1)
+	    _Color ("Main Color", Color) = (1,1,1,1)
         _MainTex ("Tint Color (RGB)", 2D) = "white" {}
-        _Size ("Size", Range(0, 20)) = 1
+        _Size ("Size", Float) = 1
 		[MaterialToggle] _AlphaSize ("Alpha Size", Float) = 0
+    	
+    	_StencilComp ("Stencil Comparison", Float) = 8
+		_Stencil ("Stencil ID", Float) = 0
+		_StencilOp ("Stencil Operation", Float) = 0
+		_StencilWriteMask ("Stencil Write Mask", Float) = 255
+		_StencilReadMask ("Stencil Read Mask", Float) = 255
+		_ColorMask ("Color Mask", Float) = 15
     }
  
     Category {
@@ -34,6 +39,14 @@ Shader "Yurowm/Blur UI" {
 					"LightMode" = "Always"
 				}
              
+                Stencil {
+                    Ref [_Stencil]
+                    Comp [_StencilComp]
+                    Pass [_StencilOp]
+                    ReadMask [_StencilReadMask]
+                    WriteMask [_StencilWriteMask]
+                }
+            	
                 CGPROGRAM
 					#pragma vertex vert
 					#pragma fragment frag
@@ -77,7 +90,7 @@ Shader "Yurowm/Blur UI" {
 					}
                           
 					half4 frag( v2f i ) : COLOR {
-						#define GRABPIXEL(weight,kernelx) tex2Dproj( _GrabTexture, UNITY_PROJ_COORD(float4(i.uvgrab.x + 0.01 * kernelx *_Size / unity_OrthoParams.x, i.uvgrab.y, i.uvgrab.z, i.uvgrab.w))) * weight
+						#define GRABPIXEL(weight,kernelx) tex2Dproj( _GrabTexture, UNITY_PROJ_COORD(float4(i.uvgrab.x + 0.01 * kernelx *_Size, i.uvgrab.y, i.uvgrab.z, i.uvgrab.w))) * weight
 
 						half4 sum = half4(0,0,0,0);
 						half pow = tex2D( _MainTex, i.uvmain ).a;
@@ -117,6 +130,14 @@ Shader "Yurowm/Blur UI" {
 					"LightMode" = "Always"
 				}
              
+                Stencil {
+                    Ref [_Stencil]
+                    Comp [_StencilComp]
+                    Pass [_StencilOp]
+                    ReadMask [_StencilReadMask]
+                    WriteMask [_StencilWriteMask]
+                }
+            	
                 CGPROGRAM
                 #pragma vertex vert
                 #pragma fragment frag
@@ -160,7 +181,7 @@ Shader "Yurowm/Blur UI" {
                 }
 
                 half4 frag( v2f i ) : COLOR {
-                    #define GRABPIXEL(weight,kernely) tex2Dproj( _GrabTexture, UNITY_PROJ_COORD(float4(i.uvgrab.x, i.uvgrab.y + 0.01 * kernely *_Size / unity_OrthoParams.y, i.uvgrab.z, i.uvgrab.w))) * weight
+                    #define GRABPIXEL(weight,kernely) tex2Dproj( _GrabTexture, UNITY_PROJ_COORD(float4(i.uvgrab.x, i.uvgrab.y + 0.01 * kernely *_Size, i.uvgrab.z, i.uvgrab.w))) * weight
 
                     half4 sum = half4(0,0,0,0);
 					float pow = tex2D( _MainTex, i.uvmain ).a;
@@ -200,6 +221,14 @@ Shader "Yurowm/Blur UI" {
                 Tags {
 					"LightMode" = "Always"
 				}
+            	
+                Stencil {
+                    Ref [_Stencil]
+                    Comp [_StencilComp]
+                    Pass [_StencilOp]
+                    ReadMask [_StencilReadMask]
+                    WriteMask [_StencilWriteMask]
+                }
              
                 CGPROGRAM
 					#pragma vertex vert
@@ -244,7 +273,7 @@ Shader "Yurowm/Blur UI" {
 					}
                           
 					half4 frag( v2f i ) : COLOR {
-						#define GRABPIXEL(weight,kernelx) tex2Dproj( _GrabTexture, UNITY_PROJ_COORD(float4(i.uvgrab.x + 0.01 * kernelx *_Size / unity_OrthoParams.x, i.uvgrab.y, i.uvgrab.z, i.uvgrab.w))) * weight
+						#define GRABPIXEL(weight,kernelx) tex2Dproj( _GrabTexture, UNITY_PROJ_COORD(float4(i.uvgrab.x + 0.01 * kernelx *_Size, i.uvgrab.y, i.uvgrab.z, i.uvgrab.w))) * weight
 
 						half4 sum = half4(0,0,0,0);
 						half pow = tex2D( _MainTex, i.uvmain ).a;
@@ -273,7 +302,15 @@ Shader "Yurowm/Blur UI" {
                 Tags { 
 					"LightMode" = "Always"
 				}
-             
+            	
+                Stencil {
+                    Ref [_Stencil]
+                    Comp [_StencilComp]
+                    Pass [_StencilOp]
+                    ReadMask [_StencilReadMask]
+                    WriteMask [_StencilWriteMask]
+                }
+            	
                 CGPROGRAM
                 #pragma vertex vert
                 #pragma fragment frag
@@ -317,7 +354,7 @@ Shader "Yurowm/Blur UI" {
                 }
 
                 half4 frag( v2f i ) : COLOR {
-                    #define GRABPIXEL(weight,kernely) tex2Dproj( _GrabTexture, UNITY_PROJ_COORD(float4(i.uvgrab.x, i.uvgrab.y + 0.01 * kernely *_Size / unity_OrthoParams.y, i.uvgrab.z, i.uvgrab.w))) * weight
+                    #define GRABPIXEL(weight,kernely) tex2Dproj( _GrabTexture, UNITY_PROJ_COORD(float4(i.uvgrab.x, i.uvgrab.y + 0.01 * kernely *_Size, i.uvgrab.z, i.uvgrab.w))) * weight
 
                     half4 sum = half4(0,0,0,0);
 					float pow = tex2D( _MainTex, i.uvmain ).a;
@@ -348,14 +385,22 @@ Shader "Yurowm/Blur UI" {
 				}
 				
 				Blend SrcAlpha OneMinusSrcAlpha
+            	
+                Stencil {
+                    Ref [_Stencil]
+                    Comp [_StencilComp]
+                    Pass [_StencilOp]
+                    ReadMask [_StencilReadMask]
+                    WriteMask [_StencilWriteMask]
+                }
                 
 				CGPROGRAM
 					#pragma vertex vert
 					#pragma fragment frag 
 					#pragma fragmentoption ARB_precision_hint_fastest 
 					#include "UnityCG.cginc"
-             
-					struct appdata_t {
+
+				struct appdata_t {
 						float4 vertex : POSITION;
 						float2 texcoord: TEXCOORD0;
 						float4 color    : COLOR;
@@ -390,9 +435,6 @@ Shader "Yurowm/Blur UI" {
 					}
              
 					half4 frag( v2f i ) : COLOR {
-						i.uvgrab.xy = _GrabTexture_TexelSize.xy * i.uvgrab.z + i.uvgrab.xy;
-                 
-						half4 col = tex2Dproj( _GrabTexture, UNITY_PROJ_COORD(i.uvgrab));
 						half4 tint = tex2D( _MainTex, i.uvmain ) * i.color;
 
 						return tint;

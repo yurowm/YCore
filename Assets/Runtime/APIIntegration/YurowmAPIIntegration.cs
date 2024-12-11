@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net.Http;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Yurowm.Coroutines;
@@ -28,7 +29,7 @@ namespace Yurowm.Services {
             return result;
         }
         
-        protected override IEnumerator Initialize() {
+        protected override async UniTask Initialize() {
             if (debug)
                 isConfigured = true;
             else {
@@ -38,7 +39,7 @@ namespace Yurowm.Services {
                     dataProvider
                         .WaitReady()
                         .ContinueWith(() => isConfigured = true)
-                        .Run();
+                        .Forget();
                 } 
             }
 
@@ -53,7 +54,6 @@ namespace Yurowm.Services {
             // connection.StartAsync();
             //
             // App.onQuit += () => StopHub();
-            yield break;
         }
 
         // async Task StopHub() {

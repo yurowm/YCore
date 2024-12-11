@@ -32,7 +32,7 @@ namespace Yurowm.UI {
 		}
 
 		
-		List<string> unkownArguments = new List<string>();
+		List<string> unkownArguments = new();
 		void OnChangeExpression() {
 			expression = new Expression(main.expression);
 			

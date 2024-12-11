@@ -13,6 +13,7 @@ namespace Yurowm.ComposedPages {
         
         public override void Initialize() {
             base.Initialize();
+            toggle.onValueChanged.RemoveAllListeners();
             toggle.onValueChanged.AddListener(OnValueChanged);
             
             this.SetupChildComponent(out animator);
@@ -37,7 +38,6 @@ namespace Yurowm.ComposedPages {
                 animator.RewindEnd(clip);
             else
                 animator.Play(clip);
-            
         }
 
         void OnValueChanged(bool value) {
@@ -47,7 +47,8 @@ namespace Yurowm.ComposedPages {
 
         #region IReserved
 
-        public void Rollout() {
+        public override void Rollout() {
+            base.Rollout();
             onValueChanged = null;
             SetTitle("");
         }

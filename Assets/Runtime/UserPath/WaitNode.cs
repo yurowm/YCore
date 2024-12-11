@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Cysharp.Threading.Tasks;
 using Yurowm.Coroutines;
 using Yurowm.Nodes;
 using Yurowm.Serialization;
@@ -7,7 +8,7 @@ using Yurowm.Utilities;
 namespace Yurowm.Core {
     public class WaitNode : UserPathFilter {
         
-        public readonly Port durationPort = new Port(2, "Duration (Float)", Port.Info.Input, Side.Left);
+        public readonly Port durationPort = new(2, "Duration (Float)", Port.Info.Input, Side.Left);
 
         public override IEnumerable GetPorts() {
             yield return base.GetPorts();
@@ -16,11 +17,11 @@ namespace Yurowm.Core {
         
         public float seconds = 5;
 
-        public override IEnumerator Logic() {
+        public override async UniTask Logic() {
             if (Pull(durationPort, out float pulledDuration))
-                yield return new Wait(pulledDuration);
+                await UniTask.WaitForSeconds(pulledDuration);
             else
-                yield return new Wait(seconds);
+                await UniTask.WaitForSeconds(seconds);
         }
 
         public override void Serialize(IWriter writer) {

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Scripting;
 using Yurowm.Coroutines;
@@ -14,9 +15,9 @@ namespace Yurowm.Serialization {
     public static class PropertyStorage {
         
         [OnLaunch(int.MinValue)]
-        static IEnumerator OnLaunch() {
+        static async UniTask OnLaunch() {
             if (!OnceAccess.GetAccess("PropertyStorage")) 
-                yield break;
+                return;
 
             var storages = Utils
                 .FindInheritorTypes<IPropertyStorage>(true, true)
@@ -25,7 +26,7 @@ namespace Yurowm.Serialization {
                 .CastIfPossible<IPropertyStorage>();
             
             foreach (var storage in storages) {
-                yield return Load(storage);
+                await Load(storage);
                 loadedStorages.Add(storage);
             }
         }
@@ -47,11 +48,8 @@ namespace Yurowm.Serialization {
             Serializator.FromTextData(storage, raw);
         }
 
-        public static IEnumerator Load(IPropertyStorage storage) {
-            string raw = null;
-            
-            yield return TextData.LoadTextRoutine(Path.Combine("Data", storage.FileName), 
-                r => raw = r,
+        public static async UniTask Load(IPropertyStorage storage) {
+            var raw = await TextData.LoadTextRoutine(Path.Combine("Data", storage.FileName), 
                 storage.Catalog);
             
             Load(storage, raw);
@@ -81,23 +79,18 @@ namespace Yurowm.Serialization {
             #endif
         }
         
-        public static IEnumerator Load<S>(Action<S> getResult) where S : IPropertyStorage {
+        public static async UniTask<S> Load<S>() where S : IPropertyStorage {
             if (GetLoadedStorage<S>(out var storage)) {
-                getResult?.Invoke(storage);
-                yield break;
+                return storage;
             }
             var result = Activator.CreateInstance<S>();
-            yield return Load(result);
+            await Load(result);
             loadedStorages.Add(result);
-            getResult?.Invoke(result);
+            return result;
         }
         
-        public static IEnumerator GetSource(IPropertyStorage storage, Action<string> getResult) {
-            string result = null;
-            yield return TextData.LoadTextRoutine(Path.Combine("Data", storage.FileName),
-                r => result = r,
-                storage.Catalog);
-            getResult?.Invoke(result);
+        public static async UniTask<string> GetSource(IPropertyStorage storage) {
+            return await TextData.LoadTextRoutine(Path.Combine("Data", storage.FileName), storage.Catalog);
         }
     }
 

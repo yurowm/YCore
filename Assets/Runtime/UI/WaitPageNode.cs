@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Yurowm.Core;
 using Yurowm.Extensions;
 using Yurowm.Serialization;
@@ -9,7 +10,7 @@ namespace Yurowm.UI {
         public List<string> pageNames = new();
         public bool immediate = false;
 
-        public override IEnumerator Logic() {
+        public override async UniTask Logic() {
 
             bool wait = true;
             
@@ -21,12 +22,12 @@ namespace Yurowm.UI {
             Page.onShow += OnShowPage;
 
             while (wait)
-                yield return null;
+                await UniTask.Yield();
 
             Page.onShow -= OnShowPage;
             
             if (!immediate)
-                yield return Page.WaitAnimation();
+                await Page.WaitAnimation();
         }
 
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
 using Yurowm.Localizations;
@@ -12,7 +13,7 @@ namespace Yurowm.Core {
     public class UserPath : NodeSystem, ISerializableID, ILocalized {
         
         [PreloadStorage]
-        public static Storage<UserPath> storage = new Storage<UserPath>("UserPath", TextCatalog.StreamingAssets);
+        public static Storage<UserPath> storage = new("UserPath", TextCatalog.StreamingAssets);
         
         [OnLaunch(1)]
         static void Initialize() {
@@ -71,9 +72,8 @@ namespace Yurowm.Core {
                 if (events.HasFlag(Event.Unfocus)) App.onUnfocus += Start;
             }
 
-            public override IEnumerator Logic() {
+            public override async UniTask Logic() {
                 Push(outputPort);
-                yield break;
             }
 
             public override void Serialize(IWriter writer) {
@@ -127,19 +127,19 @@ namespace Yurowm.Core {
         public virtual void Initialize() {}
         
         public void Start() { 
-            _Logic().Run();
+            _Logic().Forget();
         }
         
         protected virtual void OnStart() {}
         protected virtual void OnEnd() {}
         
-        IEnumerator _Logic() {
+        async UniTask _Logic() {
             OnStart();
-            yield return Logic();
+            await Logic();
             OnEnd();
         }
 
-        public abstract IEnumerator Logic();
+        public abstract UniTask Logic();
     }
     
     public abstract class UserPathSource : UserPathState {
@@ -152,9 +152,7 @@ namespace Yurowm.Core {
     }
     
     public abstract class UserPathValueProvider : UserPathSource {
-        public override IEnumerator Logic() {
-            yield break;
-        }
+        public override async UniTask Logic() { }
         
         public override IEnumerable<object> OnPortPulled(Port sourcePort, Port targetPort) {
             if (targetPort == outputPort)

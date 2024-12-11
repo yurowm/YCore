@@ -67,6 +67,14 @@ namespace Yurowm.Extensions {
             return $"<s>{text}</s>";
         }
         
+        public static string Superscript(this string text) {
+            return $"<sup>{text}</sup>";
+        }
+        
+        public static string Subscript(this string text) {
+            return $"<sub>{text}</sub>";
+        }
+        
         public static string Underline(this string text) {
             return $"<u>{text}</u>";
         }

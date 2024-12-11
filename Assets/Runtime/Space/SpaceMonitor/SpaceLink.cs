@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Cysharp.Threading.Tasks;
 using Yurowm.Coroutines;
 using Yurowm.UI;
 
@@ -27,7 +28,7 @@ namespace Yurowm.Spaces {
             if (waitUI) 
                 Page.WaitAnimation()
                     .ContinueWith(() => Space.Hide(spaceType.GetSelectedType()))
-                    .Run();
+                    .Forget();
             else 
                 Space.Hide(spaceType.GetSelectedType());
         }

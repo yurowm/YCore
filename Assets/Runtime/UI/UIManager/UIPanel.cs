@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
 using Yurowm.UI;
@@ -64,26 +65,26 @@ namespace Yurowm {
         string HideClip => overrideHideClip.IsNullOrEmpty() ? hideClip : overrideHideClip;
         string ShowClip => overrideShowClip.IsNullOrEmpty() ? showClip : overrideShowClip;
 
-        IEnumerator Play(bool visible) {
+        async UniTask Play(bool visible) {
             while (isPlaying)
-                yield return null;
+                await UniTask.Yield();
             
             isPlaying = true;
             
             if (visible) gameObject.SetActive(true);
             
-            yield return Playing(visible);
+            await Playing(visible);
             
             if (!visible) gameObject.SetActive(false);
             
             isPlaying = false;
         }
 
-        IEnumerator Playing(bool visible) {
+        async UniTask Playing(bool visible) {
             if (animator) {
                 var clip = visible ? ShowClip : HideClip;
-                yield return animator.PlayAndWait(clip);
-                yield break;
+                await animator.PlayAndWait(clip);
+                return;
             }
             if (sampler) {
                 var length = sampler.Length;
@@ -104,7 +105,7 @@ namespace Yurowm {
                     
                     sampler.RealTime = t;
                     
-                    yield return  null;
+                    await UniTask.Yield();
                 }
                 
                 sampler.RealTime = end;
@@ -112,9 +113,9 @@ namespace Yurowm {
             
         }
         
-        public IEnumerator WaitPlaying() {
+        public async UniTask WaitPlaying() {
             while (isPlaying) 
-                yield return null;
+                await UniTask.Yield();
         }
         
         public void SetVisible(bool visible, bool immediate = false) {
@@ -133,7 +134,7 @@ namespace Yurowm {
                 
                 gameObject.SetActive(visible);
             } else 
-                Play(visible).Run();
+                Play(visible).Forget();
             
             sound?.Play(clip);
         }

@@ -115,7 +115,8 @@ namespace Yurowm.Shapes {
                 thicknessCurve = thicknessCurve,
                 tileY = tileY,
                 smooth = smooth,
-                smoothPower = smoothPower
+                smoothPower = smoothPower,
+                loop = _Loop
             };
             
             line.FillMesh(builder, order);

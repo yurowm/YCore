@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Text;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -51,7 +53,6 @@ namespace Yurowm.Console {
             if (!_Instance) _Instance = this;
 
             enter.onClick.SetSingleListner(OnSubmit);
-            cancel.onClick.SetSingleListner(OnCancel);
             output.text = "";
             input.text = "";
             input.onSubmit.AddListener(OnSubmit);
@@ -62,14 +63,13 @@ namespace Yurowm.Console {
         void OnEnable() {
 			enter.gameObject.SetActive(true);
 			cancel.gameObject.SetActive(false);
-            cancelRequest = false;
             
             LayoutUpdate();
         }
 
         public void Hello() {
-            WriteLine(ColorizeText("Write 'help' to see the command list.", Color.gray));
-            WriteLine(ColorizeText("Write 'hide' to close the console.", Color.gray));
+            WriteLineColored("Write 'help' to see the command list.", Color.gray);
+            WriteLineColored("Write 'hide' to close the console.", Color.gray);
         }
 
 		bool isFocused = false;
@@ -105,57 +105,46 @@ namespace Yurowm.Console {
             if (string.IsNullOrEmpty(command))
                 return;
             WriteLine("<i>> " + command + "</i>");
-            Execute(command).Run();
+            Execute(command).Forget();
         }
 
-        bool cancelRequest = false;
-        void OnCancel() {
-            cancelRequest = true;
-        }
-
-        IEnumerator Execute(string command) {
+        async UniTask Execute(string command) {
             enter.gameObject.SetActive(false);
             cancel.gameObject.SetActive(true);
 
-            cancelRequest = false;
-
-            var logic = Commands.Execute(command, WriteLine);
-
-            while (logic.MoveNext() && !cancelRequest)
-                yield return logic.Current;
-   
-            cancelRequest = false;
+            
+            await Commands.Execute(command);
 
             enter.gameObject.SetActive(true);
             cancel.gameObject.SetActive(false);
         }
 
-        public void WriteLine(string command) {
-            builder.AppendLine(command);
-            var text = builder.ToString().Trim();
+        public static void WriteLine(string command) {
+            Instance.builder.AppendLine(command);
+            var text = Instance.builder.ToString().Trim();
             // if (text.Length > 5000)
             //     text = text.Substring(text.Length - 5000, 5000);
             
-            output.text = text;
+            Instance.output.text = text;
         }
 
-        public static string Error(string text) {
-            return ColorizeText(text, Color.red, false, true);
+        public static void Error(string text) {
+            WriteLineColored(text, Color.red, false, true);
         }
 
-        public static string Success(string text) {
-            return ColorizeText(text, Color.green, true);
+        public static void Success(string text) {
+            WriteLineColored(text, Color.green, true);
         }
 
-        public static string Alias(string text) {
-            return ColorizeText(text, Color.cyan);
+        public static void Alias(string text) {
+            WriteLineColored(text, Color.cyan);
         }
 
-        public static string Warning(string text) {
-            return ColorizeText(text, Color.yellow, false, true);
+        public static void Warning(string text) {
+            WriteLineColored(text, Color.yellow, false, true);
         }
 
-        public static string ColorizeText(string text, Color? color = null, bool bold = false, bool italic = false) {
+        public static void WriteLineColored(string text, Color? color = null, bool bold = false, bool italic = false) {
             StringBuilder builder = new StringBuilder();
             if (color.HasValue)
                 builder.Append(string.Format("<color=#{0:X2}{1:X2}{2:X2}{3:X2}>",
@@ -172,7 +161,7 @@ namespace Yurowm.Console {
             if (bold) builder.Append("</b>");
             if (color.HasValue) builder.Append("</color>");
 
-            return builder.ToString();
+            WriteLine(builder.ToString());
         }
     }
 }

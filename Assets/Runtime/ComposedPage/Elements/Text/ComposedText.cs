@@ -49,6 +49,7 @@ namespace Yurowm.ComposedPages {
             base.Rollout();
             height = null;
             layout.flexibleHeight = -1;
+            textLabel.alignment = TextAlignmentOptions.Left;
             SetText("");
         }
 

@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Cysharp.Threading.Tasks;
+using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.Scripting;
 using Yurowm.Coroutines;
@@ -60,10 +62,10 @@ namespace Yurowm.Utilities {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         public static void Launch() {
             Utils.SetMainThread();
-            Launching().Run();
+            Launching().Forget();
         }
 
-        static IEnumerator Launching() {
+        static async UniTask Launching() {
             var launches = UnityUtils.GetAllMethodsWithAttribute<OnLaunchAttribute>(
                     BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                 .ToDictionary();
@@ -72,7 +74,7 @@ namespace Yurowm.Utilities {
             Progress = 0;
             
             foreach (var modifier in launchModifiers)
-                yield return modifier.PreLoad();
+                await modifier.PreLoad();
 
             var report = new StringBuilder();
             
@@ -94,30 +96,30 @@ namespace Yurowm.Utilities {
                         Debug.LogException(e);
                     }
     
-                    if (result is IEnumerator enumerator)
-                        yield return enumerator;
+                    if (result is UniTask task)
+                        await task;
                     
                     Progress++;
                     ProgressCurrent = 0;
                     
                     executionTimer.Flash($"{name}:{l.Key.Name}");
                     
-                    yield return null;
+                    await UniTask.Yield();
                 }
             }
             
             Debug.Log(report.ToString());
             
             foreach (var modifier in launchModifiers)
-                yield return modifier.PostLoad();
+                await modifier.PostLoad();
         }
     }
 
     [Preserve]
     public abstract class OnLaunchModifier {
         public abstract void BeforeSceneLoaded();
-        public abstract IEnumerator PreLoad();
-        public abstract IEnumerator PostLoad();
+        public abstract UniTask PreLoad();
+        public abstract UniTask PostLoad();
     }
     
     public static class OnceAccess {

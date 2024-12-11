@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Coroutines;
 using Yurowm.DebugTools;
@@ -15,7 +16,7 @@ namespace Yurowm.Profiling {
         [OnLaunch()]
         static void Initialize() {
             if (OnceAccess.GetAccess("YProfiler"))
-                Update().Run();
+                Update().Forget();
         }
         #endif
         
@@ -23,7 +24,7 @@ namespace Yurowm.Profiling {
         static int frames = 0;
         static DelayedAccess reportUpdate = new DelayedAccess(1f);
                         
-        static IEnumerator Update () {
+        static async UniTask Update () {
             while (true) {
                 frames++;
                 if (reportUpdate.GetAccess()) {
@@ -42,7 +43,8 @@ namespace Yurowm.Profiling {
                 } else
                     foreach (AreaProfiler area in areas.Values)
                         area.Frame();
-                yield return null;
+                
+                await UniTask.Yield();
             }
             
         }

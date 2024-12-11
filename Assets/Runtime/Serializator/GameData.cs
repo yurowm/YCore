@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Scripting;
 using Yurowm.Coroutines;
@@ -95,24 +96,21 @@ namespace Yurowm.Serialization {
             onSetDirty?.Invoke();
         }
 
-        IEnumerator dirtyCheck;
+        long dirtyCheck;
         
-        IEnumerator DirtyCheck() {
+        async UniTask DirtyCheck() {
             var thisProcess = dirtyCheck;
             while (thisProcess == dirtyCheck) {
                 if (isDirty) {
                     Save(fileName);
-                    yield return new Wait(1);
+                    await UniTask.WaitForSeconds(1);
                 }
-                yield return null;
+                await UniTask.Yield();
             }
         }
         
-        IEnumerator ReadFromFile(string fileName) {
-            string raw = null;
-            yield return TextData.LoadTextRoutine(Path.Combine("Data", fileName),
-                r => raw = r,
-                TextCatalog.Persistent);
+        async UniTask ReadFromFile(string fileName) {
+            var raw = await TextData.LoadTextRoutine(Path.Combine("Data", fileName), TextCatalog.Persistent);
             
             if (!raw.IsNullOrEmpty()) {
                 if (Key != null)
@@ -144,17 +142,17 @@ namespace Yurowm.Serialization {
         }
         
         public void Restore(string name) {
-            ReadFromFile(backupFileFormat.FormatText(name)).Run();
+            ReadFromFile(backupFileFormat.FormatText(name)).Forget();
         }
 
-        public IEnumerator Load() {
-            yield return ReadFromFile(fileName);
+        public UniTask Load() {
+            return ReadFromFile(fileName);
         }
         
         void Initialize() {
             modules.ForEach(m => m.Initialize());
-            dirtyCheck = DirtyCheck();
-            dirtyCheck.Run();
+            dirtyCheck = YRandom.main.Seed();
+            DirtyCheck().Forget();
             Reporter.AddReport($"Game Data ({fileName})", new SerializableReport(this));
         }
         

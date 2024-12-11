@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using Yurowm.Coroutines;
@@ -25,7 +26,7 @@ namespace Yurowm.Serialization {
         SerializableReportEditor rawViewDict = null;
         
         public override bool Initialize() {
-            Load().Complete().Run();
+            Load().Complete();
 
             rawViewDict = null;
             
@@ -90,17 +91,13 @@ namespace Yurowm.Serialization {
         
         
         protected virtual void OnOtherContextMenu(GenericMenu menu) {
-            menu.AddItem(new GUIContent("Reset"), false, () => Load().Run());
+            menu.AddItem(new GUIContent("Reset"), false, () => Load().Forget());
             
-            menu.AddItem(new GUIContent("Raw Data/Save to System Buffer"), false, () => {
-                EditorGUIUtility.systemCopyBuffer = Serializator.ToTextData(storage);
-            });
+            menu.AddItem(new GUIContent("Raw Data/Save to System Buffer"), false, () => 
+                EditorGUIUtility.systemCopyBuffer = Serializator.ToTextData(storage));
             
-            menu.AddItem(new GUIContent("Raw Data/Source to System Buffer"), false, () => {
-                PropertyStorage.GetSource(storage, r => EditorGUIUtility.systemCopyBuffer = r)
-                    .Complete()
-                    .Run();
-            });
+            menu.AddItem(new GUIContent("Raw Data/Source to System Buffer"), false, async () => 
+                EditorGUIUtility.systemCopyBuffer = await PropertyStorage.GetSource(storage));
             
             menu.AddItem(new GUIContent("Raw Data/Inject"), false, () => {
                 try {
@@ -122,10 +119,10 @@ namespace Yurowm.Serialization {
             PropertyStorage.Save(storage);
         }
         
-        IEnumerator Load() {
+        async UniTask Load() {
             if (storage == null)
                 storage = EmitNew();
-            yield return PropertyStorage.Load(storage);
+            await PropertyStorage.Load(storage);
         }
 
     }

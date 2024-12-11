@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
@@ -747,7 +748,7 @@ namespace Yurowm.Localizations {
                                     locked = false;
                                     GUI.changed = true;
                                 })
-                                .Run();
+                                .Forget();
                         }
                     }
                 }

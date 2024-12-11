@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
 using Yurowm.UI;
+using Yurowm.Utilities;
 
 namespace Yurowm {
     public class ToggleButton: Button, IUIRefresh {
@@ -31,21 +33,19 @@ namespace Yurowm {
         }
         
         void Animate(bool state) {
-            animation = Animation(state);
-            animation.Run();
+            animationSeed = YRandom.main.Value();
+            Animation(state).Forget();
         }
         
-        IEnumerator animation;
-        IEnumerator Animation(bool state) {
-            var thisLogic = animation;
+        float animationSeed;
+        async UniTask Animation(bool state) {
+            var seed = animationSeed;
             var targetTime = state ? 1f : 0f;
 
-            while (thisLogic == animation && targetTime != sampler.Time) {
+            while (seed == animationSeed && targetTime != sampler.Time) {
                 sampler.Time = sampler.Time.MoveTowards(targetTime, Time.unscaledDeltaTime * 4f);
-                yield return null;
+                await UniTask.Yield();
             }
-            
-            animation = null;
         }
 
         public void Refresh() {

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using Yurowm.Core;
 using Yurowm.Extensions;
 using Yurowm.Serialization;
@@ -10,17 +11,17 @@ namespace Yurowm.UI {
         
         public bool buttonLock;
 
-        public override IEnumerator Logic() {
+        public override async UniTask Logic() {
 
             if (buttonID.IsNullOrEmpty())
-                yield break;
+                return;
             
             var buttons = Behaviour
                 .GetAllByID<Button>(buttonID)
                 .ToArray();
             
             if (!buttons.Any())
-                yield break;
+                return;
             
             bool wait = true;
             
@@ -31,7 +32,7 @@ namespace Yurowm.UI {
             buttons.ForEach(b => b.onClick.AddListener(OnButtonClick));
             
             while (wait)
-                yield return null;
+                await UniTask.Yield();
 
             buttons.ForEach(b => b.onClick.RemoveListener(OnButtonClick));
             

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
@@ -294,7 +295,7 @@ namespace Yurowm.Serialization {
         protected virtual void OnOtherContextMenu(GenericMenu menu) {
             menu.AddItem(new GUIContent("Reset"), false, () => {
                 tags.Clear();
-                storage.Load().Complete().Run();
+                storage.Load().Complete();
                 storage.items.ForEach(UpdateTags);
                 Sort();
                 list.itemCollection = storage.items;
@@ -305,8 +306,8 @@ namespace Yurowm.Serialization {
                 EditorGUIUtility.systemCopyBuffer = Serializator.ToTextData(storage);
             });
             
-            menu.AddItem(new GUIContent("Raw Data/Source to System Buffer"), false, () =>
-                storage.GetSource(r => EditorGUIUtility.systemCopyBuffer = r).Run());
+            menu.AddItem(new GUIContent("Raw Data/Source to System Buffer"), false, async () =>
+                EditorGUIUtility.systemCopyBuffer = await storage.GetSource());
             
             menu.AddItem(new GUIContent("Raw Data/Inject (Hard)"), false, () => {
                 try {
@@ -358,7 +359,7 @@ namespace Yurowm.Serialization {
         }
         
         public virtual void Apply() {
-            storage.Apply();
+            storage.Apply().GetAwaiter().GetResult();
         }
 
         protected virtual void OnItemsContextMenu(GenericMenu menu, S[] items) { }
@@ -395,7 +396,7 @@ namespace Yurowm.Serialization {
         #endregion
         
         public class ItemsList : HierarchyList<S> {
-            List<IInfo> selected = new List<IInfo>();
+            List<IInfo> selected = new();
             Func<S, string> getName;
             Func<S, string> getFolderName;
             Action<S, string> setFolderName;

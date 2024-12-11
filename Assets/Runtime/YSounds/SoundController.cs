@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.ContentManager;
 using Yurowm.Coroutines;
@@ -139,15 +140,18 @@ namespace Yurowm.Sounds {
             musicSource.loop = true;
             musicSource.volume = 0;
             
-            Fade(musicSource, MusicVolume * MusicVolumeMultiplier).Run();
+            Fade(musicSource, MusicVolume * MusicVolumeMultiplier).Forget();
         }
 
-        static IEnumerator Fade(AudioSource source, float volume) {
-            if (!source) yield break;
+        static async UniTask Fade(AudioSource source, float volume) {
+            if (!source) 
+                return;
+            
             var startVolume = source.volume;
+            
             for (var t = 0f; t < 1f; t += Time.unscaledDeltaTime) {
                 source.volume = YMath.Lerp(startVolume, volume, t);
-                yield return null;
+                await UniTask.Yield();
             }
             source.volume = volume;
         }
@@ -159,7 +163,7 @@ namespace Yurowm.Sounds {
 
             Fade(source, 0f)
                 .ContinueWith(source.Stop)
-                .Run();
+                .Forget();
         }
 
         #region Clips

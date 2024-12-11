@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
@@ -15,9 +16,9 @@ namespace Yurowm.Serialization {
 
     public abstract class Storage : ISerializable {
         [OnLaunch(int.MinValue)]
-        static IEnumerator OnLaunch() {
+        static async UniTask OnLaunch() {
             if (!OnceAccess.GetAccess("Storage"))
-                yield break;
+                return;
             
             foreach (var field in Utils
                          .GetAllFieldsWithAttribute<PreloadStorageAttribute>(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
@@ -25,7 +26,7 @@ namespace Yurowm.Serialization {
                          .Select(t => t.Item1)
                          .Cast<FieldInfo>())
                 if (field.GetValue(null) is Storage storage)
-                    yield return storage.Load();
+                    await storage.Load();
         }
         
         bool isLoaded = false;
@@ -35,43 +36,43 @@ namespace Yurowm.Serialization {
         public string Name => fileName;
         
         TextCatalog catalog;
+        ISerializer serializer;
 
         public Storage() { }
         
-        public Storage(string fileName, TextCatalog catalog) {
+        public Storage(string fileName, TextCatalog catalog, ISerializer serializer = null) {
             this.fileName = fileName + Serializer.FileExtension;
             this.catalog = catalog;
+            this.serializer = serializer ?? Serializator.GetSerializer();
         }
 
-        public void Apply() {
+        public async UniTask Apply() {
             if (!IsLoaded) 
-                Load().Complete().Run();
-            string raw = Serializator.ToTextData(this, true);
+                await Load();
+            var raw = serializer.Serialize(this);
             if (catalog == TextCatalog.StreamingAssets && !Application.isEditor)
                 raw = raw.Encrypt();
             TextData.SaveText(Path.Combine("Data", fileName), raw, catalog);
         }
         
-        public IEnumerator GetSource(Action<string> getResult) {
-            string source = null;
-            yield return TextData.LoadTextRoutine(Path.Combine("Data", fileName), r => source = r, catalog);
+        public async UniTask<string> GetSource() {
+            var source = await TextData.LoadTextRoutine(Path.Combine("Data", fileName), catalog);
             
             if (!source.IsNullOrEmpty() && catalog == TextCatalog.StreamingAssets && !Application.isEditor)
                 source = source.Decrypt();
             
-            getResult?.Invoke(source);
+            return source;
         }
 
-        public virtual IEnumerator Load() {
+        public virtual async UniTask Load() {
             isLoaded = true;
-            string source = null;
-            yield return GetSource(r => source = r);
+            var source = await GetSource();
 
             if (source.IsNullOrEmpty()) 
-                yield break;
+                return;
             
             try {
-                Serializator.FromTextData(this, source);
+                serializer.Deserialize(this, source);
             } catch (Exception e) {
                 Debug.LogException(e);
                 isLoaded = false;
@@ -90,7 +91,7 @@ namespace Yurowm.Serialization {
         public List<S> items {
             get {
                 if (!IsLoaded) 
-                    Load().Complete().Run();
+                    Load().Complete();
                 return _items;
             }
         }
@@ -99,8 +100,8 @@ namespace Yurowm.Serialization {
         
         public Func<S, int> sorter;
         
-        public Storage(string fileName, TextCatalog catalog) :
-            base(fileName, catalog) {
+        public Storage(string fileName, TextCatalog catalog, ISerializer serializer = null) :
+            base(fileName, catalog, serializer) {
             Initialize();
         }
         
@@ -114,8 +115,8 @@ namespace Yurowm.Serialization {
             hasIDs = typeof(ISerializableID).IsAssignableFrom(typeof(S));
         }
         
-        public override IEnumerator Load() {
-            yield return base.Load();
+        public override async UniTask Load() {
+            await base.Load();
             
             if (!Application.isEditor) {
                 items.RemoveAll(i => !i.CheckAvailability());
@@ -160,7 +161,7 @@ namespace Yurowm.Serialization {
         public IEnumerable<S> Items() {
             if (!IsLoaded) {
                 Debug.LogException(new Exception("Storage is not loaded"));
-                Load().Complete().Run();
+                Load().Complete();
             }
             return _items;
         }  
@@ -181,7 +182,7 @@ namespace Yurowm.Serialization {
 
         public T GetItem<T>(Func<T, bool> filter = null) where T : S {
             if (!IsLoaded) 
-                Load().Complete().Run();
+                Load().Complete();
             if (filter == null)
                 return _items.CastOne<T>();
             return _items.CastIfPossible<T>().FirstOrDefault(filter);

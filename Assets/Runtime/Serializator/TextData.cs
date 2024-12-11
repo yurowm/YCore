@@ -2,6 +2,7 @@
 using System.Collections;
 using System.IO;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Yurowm.Console;
@@ -80,14 +81,13 @@ namespace Yurowm.Serialization {
         }
         
         [QuickCommand("loadtext", "Data/Pages.json", "Load StreamingAssets/Data/Pages.ys file and show text")]
-        static IEnumerator LoadTextCommand(string path) {
-            string result = null;
-            yield return LoadTextRoutine(path, r => result = r);
+        static async UniTask LoadTextCommand(string path) {
+            var result = await LoadTextRoutine(path);
             
             if (result.IsNullOrEmpty())
-                yield return YConsole.Error("The file is empty or doesn't exist");
+                YConsole.Error("The file is empty or doesn't exist");
             else
-                yield return YConsole.Alias(result);
+                YConsole.Alias(result);
         }
         
         static string GetFullPath(string path, TextCatalog catalog) {
@@ -102,24 +102,23 @@ namespace Yurowm.Serialization {
             return Path.Combine(fullPath, path);
         }
         
-        static IEnumerator LoadTextAsyncInternal(string path, Action<string> getResult) {
+        static async UniTask<string> LoadTextAsyncInternal(string path) {
             using var request = UnityWebRequest.Get(path);
             
-            yield return request.SendWebRequest();
+            await request.SendWebRequest();
 
             while (request.result == UnityWebRequest.Result.InProgress)
-                yield return null;
-
+                await UniTask.Yield();
+            
             switch (request.result) {
                 case UnityWebRequest.Result.Success:
-                    getResult?.Invoke(request.downloadHandler.text); 
-                    yield break;
+                    return request.downloadHandler.text; 
                 default:
                     Debug.LogError($"Text is not loaded: {request.result}: {request.error}\n{path}");
                     break;
             }
             
-            getResult?.Invoke(null); 
+            return null;
         }
         
         static string LoadTextFromFile(string path) {
@@ -137,15 +136,13 @@ namespace Yurowm.Serialization {
             #endif
         }
         
-        public static IEnumerator LoadTextRoutine(string path, Action<string> getResult, TextCatalog catalog = TextCatalog.StreamingAssets) {
+        public static async UniTask<string> LoadTextRoutine(string path, TextCatalog catalog = TextCatalog.StreamingAssets) {
             path = GetFullPath(path, catalog);
 
-            if (!Application.isEditor && path.Contains("://")) {
-                yield return LoadTextAsyncInternal(path, getResult);
-            } else {
-                var result = LoadTextFromFile(path);
-                getResult?.Invoke(result);
-            }
+            if (!Application.isEditor && path.Contains("://"))
+                return await LoadTextAsyncInternal(path);
+            else
+                return LoadTextFromFile(path);
         }
     }
     

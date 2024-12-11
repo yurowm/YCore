@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Yurowm.Coroutines;
 using Yurowm.DebugTools;
 using Yurowm.Extensions;
@@ -10,7 +11,7 @@ namespace Yurowm.UI {
     public static class UIRefresh {
         [OnLaunch(Behaviour.INITIALIZATION_ORDER + 1)]
         static void OnLaunch() {
-            Logic().Run();
+            Logic().Forget();
             
             OnLaunchAttribute.unload += () => {
                 uiRefreshes.Clear();
@@ -24,13 +25,13 @@ namespace Yurowm.UI {
         
         static DateTime? nextInvokeTime;
         
-        static IEnumerator Logic() {
+        static async UniTask Logic() {
             while (true) {
                 if (nextInvokeTime.HasValue && nextInvokeTime.Value <= DateTime.Now) {
                     nextInvokeTime = null;
                     Invoke();
                 }
-                yield return null;
+                await UniTask.Yield();
             }
         }
 

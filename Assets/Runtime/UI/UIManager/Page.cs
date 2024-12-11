@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using Yurowm.Analytics;
 using Yurowm.Console;
 using Yurowm.Coroutines;
@@ -37,20 +38,20 @@ namespace Yurowm.UI {
         }
         
         [QuickCommand("ui show", "MainMenu", "Show 'MainMenu' page")]
-        static string ShowPageCommand(string pageID) {
+        static void ShowPageCommand(string pageID) {
             var page = Get(pageID); 
             if (page != null) {
                 page.Show();
-                return YConsole.Success("Success!");
+                YConsole.Success("Success!");
             }
 
-            return YConsole.Error("Page isn't found!");
+            YConsole.Error("Page isn't found!");
         }
         
         [QuickCommand("ui pages", null, "Show all page names")]
-        static IEnumerator ShowPageCommand() {
+        static void ShowPageCommand() {
             foreach (var page in storage.items)
-                yield return YConsole.Alias(page.ID);
+                YConsole.Alias(page.ID);
         }
         
         static bool IsInitialized = false;
@@ -65,7 +66,7 @@ namespace Yurowm.UI {
 
             IsInitialized = true;
             
-            ShowQueue().Run();
+            ShowQueue().Forget();
         }
 
         #region Get
@@ -102,11 +103,11 @@ namespace Yurowm.UI {
         
         #region Show
         
-        static Queue<Action> showQueue = new Queue<Action>();
+        static Queue<Action> showQueue = new();
         
         public static Action<Page> onShow = delegate {};
         
-        static History<Page> history = new History<Page>(100);
+        static History<Page> history = new(100);
         
         static Page current;
         
@@ -189,13 +190,13 @@ namespace Yurowm.UI {
                 history.Back()?.Show(immediate);
         }
         
-        public IEnumerator ShowAndWait() { 
-            yield return WaitAnimation();
+        public async UniTask ShowAndWait() { 
+            await WaitAnimation();
             Show();
-            yield return WaitAnimation();
+            await WaitAnimation();
         }
         
-        static IEnumerator ShowQueue() {
+        static async UniTask ShowQueue() {
             while (true) {
                 DebugPanel.Log("Is Animating", "UI", IsAnimating);
                 DebugPanel.Log("Current Page ID", "UI", GetCurrent()?.ID);
@@ -203,7 +204,7 @@ namespace Yurowm.UI {
                 if (!IsAnimating && showQueue.Count > 0)
                     showQueue.Dequeue().Invoke();
                 
-                yield return null;
+                await UniTask.Yield();
             }
         }
 
@@ -213,9 +214,9 @@ namespace Yurowm.UI {
         
         public static bool IsAnimating => HasActiveAnimations || !IsInitialized;
 
-        public static IEnumerator WaitAnimation() {
+        public static async UniTask WaitAnimation() {
             while (IsAnimating)
-                yield return null;
+                await UniTask.Yield();
         }
         
         static bool HasActiveAnimations => !animations.IsEmpty();        
@@ -287,37 +288,37 @@ namespace Yurowm.UI {
             private set;
         } = false;
 
-        public static IEnumerator Warm() {
+        public static async UniTask Warm() {
             Warming = true;
             
             foreach (var panel in panelLinks.Values) {
                 if (panel.gameObject.activeSelf || !panel.warm)
                     continue;
                 panel.SetVisible(true, true);
-                yield return null;
+                await UniTask.Yield();
                 panel.SetVisible(false, true);
             }
             
             Warming = false;
         }
 
-        public static IEnumerator WaitPage(string pageID) {
+        public static async UniTask WaitPage(string pageID) {
             var page = Get(pageID);
             
             if (page == null)
-                yield return WaitAnimation();
+                await WaitAnimation();
             else {
                 while (IsAnimating || GetCurrent() != page)
-                    yield return null;
+                    await UniTask.Yield();
             }
         }
         
-        public static IEnumerator WaitFor(Func<Page, bool> func) {
+        public static async UniTask WaitFor(Func<Page, bool> func) {
             if (func == null)
-                yield break;
+                return;
             
             if (func.Invoke(GetCurrent()))
-                yield break;
+                return;
             
             var wait = true;
             
@@ -329,23 +330,23 @@ namespace Yurowm.UI {
             onShow += OnShow;
 
             while (wait)
-                yield return null;
+                await UniTask.Yield();
             
             onShow -= OnShow;
         }
         
-        public static IEnumerator WaitTag(string tag) {
+        public static async UniTask WaitTag(string tag) {
             if (tag.IsNullOrEmpty())
-                return null;
+                return;
             
-            return WaitFor(p => p.HasTag(tag));
+            await WaitFor(p => p.HasTag(tag));
         }
         
-        public static IEnumerator WaitNoTag(string tag) {
+        public static async UniTask WaitNoTag(string tag) {
             if (tag.IsNullOrEmpty())
-                return null;
+                return;
             
-            return WaitFor(p => !p.HasTag(tag));
+            await WaitFor(p => !p.HasTag(tag));
         }
     }
 }

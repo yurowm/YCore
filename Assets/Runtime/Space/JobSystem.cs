@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Scripting;
 using Yurowm.ContentManager;
@@ -18,7 +19,7 @@ namespace Yurowm.Jobs {
         [OnLaunch()]
         static void Initialize() {
             if (OnceAccess.GetAccess("UpdaetJob"))
-                DoUpdateJob().Run();
+                DoUpdateJob().Forget();
         }
 
         static IEnumerator<IJob> RegisterJobs() {
@@ -30,8 +31,8 @@ namespace Yurowm.Jobs {
                 yield return job;
         }
 
-        static IEnumerator DoUpdateJob() {
-            yield return null;
+        static async UniTask DoUpdateJob() {
+            await UniTask.Yield();
 
             while (true) {
                 if (jobs != null) {
@@ -43,7 +44,7 @@ namespace Yurowm.Jobs {
                     }
                 }
                 
-                yield return null;
+                await UniTask.Yield();
             }
         }
 

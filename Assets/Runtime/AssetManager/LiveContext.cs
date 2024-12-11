@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Extensions;
 
@@ -174,10 +175,10 @@ namespace Yurowm.ContentManager {
             onAdd += Delayed;
         }
         
-        public IEnumerator WaitCatch<I>(Func<I, bool> catcher) where I : class, ILiveContexted {
+        public async UniTask WaitCatch<I>(Func<I, bool> catcher) where I : class, ILiveContexted {
             foreach (var i in GetAll<I>())
                 if (catcher(i))
-                    yield break;
+                    return;
 
             bool wait = true;
             
@@ -189,15 +190,15 @@ namespace Yurowm.ContentManager {
             }
 
             onAdd += Delayed;
-            
-            yield return new WaitWhile(() => wait);
+
+            while (wait) await UniTask.Yield();
         }
 
-        public IEnumerator WaitCatch<I>(Action<I> catcher) where I : class, ILiveContexted {
+        public async UniTask WaitCatch<I>(Action<I> catcher) where I : class, ILiveContexted {
             var i = Get<I>();
             if (i != null) {
                 catcher(i);
-                return null;
+                return;
             }
             
             bool wait = true;
@@ -212,7 +213,7 @@ namespace Yurowm.ContentManager {
             
             onAdd += Delayed;
             
-            return new WaitWhile(() => wait);
+            while (wait) await UniTask.Yield();
         }
 
         public void Catch<I>(Action<I> catcher) where I : class, ILiveContexted {

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Yurowm.Coroutines;
@@ -89,7 +90,7 @@ namespace Yurowm.UI {
         }
         
         public void CenterTo(I target, float duration) {
-            if (centering != null) return;
+            if (centeringSeed != null) return;
             
             if (duration <= 0) {
                 CenterTo(target);
@@ -109,28 +110,29 @@ namespace Yurowm.UI {
             
             if (position == targetPosition) return;
 
-            centering = Centering(targetPosition, duration);                    
-            centering.Run();
+            centeringSeed = YRandom.main.Value();                    
+            Centering(targetPosition, duration).Forget();
         }
         
-        IEnumerator centering = null;
+        float centeringSeed;
         
-        IEnumerator Centering(float targetPosition, float duration) {
+        async UniTask Centering(float targetPosition, float duration) {
             if (duration <= 0) {
                 UpdateChilds(targetPosition - position);
-                yield break;
+                return;
             }
+            
+            var seed = centeringSeed;
             
             var start = position;
             
             velocity = 0;
             
-            for (var t = 0f; t < 1 && isActiveAndEnabled && !drag; t += Time.unscaledDeltaTime / duration) {
+            for (var t = 0f; t < 1 && isActiveAndEnabled && !drag && seed == centeringSeed; t += Time.unscaledDeltaTime / duration) {
                 UpdateChilds(YMath.Lerp(start, targetPosition, t.Ease(EasingFunctions.Easing.InOutCubic)) - position);
-                yield return null;
+                
+                await UniTask.Yield();
             }
-
-            centering = null;
         }
         
         #endregion
@@ -337,10 +339,10 @@ namespace Yurowm.UI {
             drag = false;
             if (friction <= 0) return;
             velocity = GetDelta(eventData) / Time.unscaledDeltaTime;
-            Inertia().Run();
+            Inertia().Forget();
         }
 
-        IEnumerator Inertia() {
+        async UniTask Inertia() {
             
             while (isActiveAndEnabled && !drag) {
 
@@ -354,7 +356,7 @@ namespace Yurowm.UI {
                     }
                 } 
                 
-                yield return null;
+                await UniTask.Yield();
             }
         }
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
@@ -22,7 +23,7 @@ namespace Yurowm.Jobs {
         [OnLaunch()]
         static void Initialize() {
             if (OnceAccess.GetAccess("Physics2D")) 
-                Simulate().Run();
+                Simulate().Forget();
         }
 
         static Action onSimulate = delegate {};
@@ -36,13 +37,13 @@ namespace Yurowm.Jobs {
             AfterSimulate,
         }
         
-        static IEnumerator Simulate() {
+        static async UniTask Simulate() {
             #if PHYSICS_2D
             
             float lastSimulate = Time.time;
                 
             if (Physics2D.simulationMode != SimulationMode2D.Script)
-                yield break;
+                return;
             
             while (true) {
                 DeltaTime = (Time.time - lastSimulate) * TimeScale;
@@ -57,12 +58,8 @@ namespace Yurowm.Jobs {
                 stage = Stage.AfterSimulate;
                 onSimulate.Invoke();
                 
-                yield return null;
+                await UniTask.Yield();
             }
-            
-            #else
-            
-            yield break;
             
             #endif
         }

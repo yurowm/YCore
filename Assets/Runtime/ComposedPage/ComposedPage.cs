@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Colors;
 using Yurowm.ContentManager;
@@ -83,7 +84,7 @@ namespace Yurowm.ComposedPages {
         }
 
         public void Show(Page page) {
-            Showing(page).Run();
+            Showing(page).Forget();
         }
 
         public Page GetCurrentPage() {
@@ -92,13 +93,13 @@ namespace Yurowm.ComposedPages {
 
         #endregion
 
-        IEnumerator Showing(Page page) {
+        async UniTask Showing(Page page) {
             if (IsShown() && page.parentPage != currentPage) {
                 currentPage.ShowSubPage(page);
-                yield break;
+                return;
             }
 
-            yield return Animation(false);
+            await Animation(false);
 
             HideElements();
 
@@ -119,7 +120,7 @@ namespace Yurowm.ComposedPages {
 
             transform.SetAsLastSibling();
             
-            yield return Animation(true);
+            await Animation(true);
         }
 
         public void BackgroundClose() {
@@ -128,12 +129,12 @@ namespace Yurowm.ComposedPages {
         }
         
         public void Close() {
-            Closing().Run();
+            Closing().Forget();
         }
         
-        IEnumerator Closing() {
+        async UniTask Closing() {
             if (currentPage != null) {
-                yield return Animation(false);
+                await Animation(false);
                 currentPage.Clear();
                 currentPage.visible = false;
 
@@ -151,18 +152,18 @@ namespace Yurowm.ComposedPages {
             if (currentPage != null) {
                 currentPage.Show();
                 if (currentPage is IUIRefresh refresh) refresh.Refresh();
-                yield return Animation(true);
+                await Animation(true);
             } else
                 RemoveElements();
         }
         
         public void Clear() {
-            Clearing().Run();
+            Clearing().Forget();
         }
         
-        IEnumerator Clearing() {
+        async UniTask Clearing() {
             if (currentPage != null)
-                yield return Animation(false);
+                await Animation(false);
             
             while (currentPage != null) {
                 currentPage.Clear();
@@ -173,12 +174,12 @@ namespace Yurowm.ComposedPages {
             RemoveElements();
         }
         
-        IEnumerator Animation(bool targetVisibility) {
+        async UniTask Animation(bool targetVisibility) {
             if (panel) {
                 if (panel.isPlaying)
-                    yield return panel.WaitPlaying();
+                    await panel.WaitPlaying();
                 panel.SetVisible(targetVisibility);
-                yield return panel.WaitPlaying();
+                await panel.WaitPlaying();
             } else
                 gameObject.SetActive(targetVisibility);
         }
@@ -268,11 +269,11 @@ namespace Yurowm.ComposedPages {
             onClose?.Invoke();
         }
 
-        public IEnumerator Wait() {
+        public async UniTask Wait() {
             while (!IsBuilt)
-                yield return null;
+                await UniTask.Yield();
             while (visible)
-                yield return null;
+                await UniTask.Yield();
         }
         
         public T AddElementWithSuffix<T>(string suffix) where T : ComposedElement {

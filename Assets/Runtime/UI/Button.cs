@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -86,12 +87,12 @@ namespace Yurowm {
         
         State state = State.None;
         
-        IEnumerator pressing = null;
+        UniTask? pressing = null;
 
         const string pressDownClip = "PressDown";
         const string successClip = "Click";
         
-        IEnumerator Pressing() {
+        async UniTask Pressing() {
             state = State.PressDown;
 
             if (animator && animator.IsPlaying()) {
@@ -105,7 +106,7 @@ namespace Yurowm {
             animator?.Play(pressDownClip);
 
             while (state == State.PressDown)
-                yield return null;
+                await UniTask.Yield();
             
             if (state == State.PressUp) {
                 
@@ -151,7 +152,7 @@ namespace Yurowm {
                 return;
 
             pressing = Pressing();
-            pressing.Run();
+            pressing.Value.Forget();
         }
 
         #endregion

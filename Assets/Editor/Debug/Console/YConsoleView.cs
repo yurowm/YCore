@@ -32,7 +32,7 @@ namespace Yurowm.Console {
             outputStyle.fontSize = 14;
         }
 
-        string offlineOutput = YConsole.Warning("The console works only in Play mode.");
+        string offlineOutput = "The console works only in Play mode.";
         const string controlName = "Command Line";
         Vector2 scrollPosition = new Vector2();
         List<string> commandsHistory = new List<string>();
@@ -73,7 +73,7 @@ namespace Yurowm.Console {
                                     commandsHistoryIndex = commandsHistory.Count;
                                 }
                             } catch (Exception e) {
-                                YConsole.Instance.WriteLine(YConsole.Error(e.ToString()));
+                                YConsole.Error(e.ToString());
                             }
                             scrollPosition = new Vector2(0, float.MaxValue);
                             command = "";

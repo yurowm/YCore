@@ -4,16 +4,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Yurowm.Console {
     public class HelloWorld : ICommand {
-        public override IEnumerator Execute(params string[] args) {
-            yield return "Hello buddy! :)";
+        public override async UniTask Execute(params string[] args) {
+            YConsole.WriteLine("Hello buddy! :)");
             foreach (string arg in args) {
-                yield return arg;
-                yield return new WaitForSeconds(1f);
+                YConsole.WriteLine(arg);
+                await UniTask.WaitForSeconds(1);
             }
         }
 
@@ -24,10 +25,10 @@ namespace Yurowm.Console {
 
     public class SceneResearch : ICommand {
 
-        Dictionary<string, Func<string[], IEnumerator>> sublogics;
+        Dictionary<string, Func<string[], UniTask>> sublogics;
 
         public SceneResearch() {
-            sublogics = new Dictionary<string, Func<string[], IEnumerator>>();
+            sublogics = new Dictionary<string, Func<string[], UniTask>>();
             sublogics.Add("list", ListOfChilds);
             sublogics.Add("select", SelectChild);
             sublogics.Add("details", PrintDetails);
@@ -47,59 +48,53 @@ namespace Yurowm.Console {
             return builder.ToString();
         }
 
-        public override IEnumerator Execute(params string[] args) {
-            IEnumerator sublogic = null;
-
+        public override async UniTask Execute(params string[] args) {
             if (args.Length > 0 && sublogics.ContainsKey(args[0]))
-                sublogic = sublogics[args[0]](args.Skip(1).ToArray());
-
-            if (sublogic == null)
-                sublogic = sublogics["help"](args.Skip(1).ToArray());
-
-            while (sublogic.MoveNext())
-                yield return sublogic.Current;
+                await sublogics[args[0]](args.Skip(1).ToArray());
+            else
+                await sublogics["help"](args.Skip(1).ToArray());
         }
 
         GameObject currentObject = null;
-        IEnumerator ListOfChilds(params string[] args) {
-            yield return YConsole.ColorizeText(string.Format("Childs of {0}", currentObject ? currentObject.name : "@Root"), Color.green, true);
+        async UniTask ListOfChilds(params string[] args) {
+            YConsole.WriteLineColored(string.Format("Childs of {0}", currentObject ? currentObject.name : "@Root"), Color.green, true);
 
             var childs = Childs(currentObject);
             if (childs.Length == 0)
-                yield return "None...";
+                YConsole.WriteLine("None...");
             else {
                 for (int i = 0; i < childs.Length; i++)
-                    yield return i + ". " + childs[i].name;
+                    YConsole.WriteLine(i + ". " + childs[i].name);
             }
         }
 
-        IEnumerator DestroySelected(params string[] args) {
+        async UniTask DestroySelected(params string[] args) {
             if (currentObject) {
                 Transform parent = currentObject.transform.parent;
                 MonoBehaviour.Destroy(currentObject);
-                yield return YConsole.Success(currentObject.name + " is removed");
+                YConsole.Success(currentObject.name + " is removed");
                 currentObject = parent ? parent.gameObject : null;
-				yield return YConsole.Success((currentObject ? currentObject.name : "@Root") + " is selected");
+                YConsole.Success((currentObject ? currentObject.name : "@Root") + " is selected");
             } else 
-                yield return YConsole.Error("@Root can't be removed");
+                YConsole.Error("@Root can't be removed");
         }
 
-        IEnumerator SelectChild(params string[] args) {
+        async UniTask SelectChild(params string[] args) {
             if (args.Length == 0) {
-                yield return YConsole.Error(
+                YConsole.Error(
                     "scene select @1 - to select a child with index # 1"
                     + "\nscene select @root - to select the root"
                     + "\nscene select @parent - to select a parent"
                     + "\nscene select ABC - to select a child with ABC name");
-                yield break;
+                return;
             }
 
             foreach (var arg in args) {
 				var childs = Childs(currentObject);
 				
                 if (childs.Length == 0) {
-					yield return YConsole.Error("Current object doesn't have any childs");
-                    yield break;  
+					YConsole.Error("Current object doesn't have any childs");
+                    return;
                 }
 
 				if (arg.StartsWith("@")) {
@@ -107,15 +102,15 @@ namespace Yurowm.Console {
 					switch (substring) {
 						case "root": {
 								currentObject = null;
-								yield return YConsole.Success((currentObject ? currentObject.name : "@Root") + " is selected");
+								YConsole.Success((currentObject ? currentObject.name : "@Root") + " is selected");
 							} break;
 						case "parent": {
 								if (currentObject && currentObject.transform.parent) {
 									currentObject = currentObject.transform.parent.gameObject;
-									yield return YConsole.Success((currentObject ? currentObject.name : "@Root") + " is selected");
+                                    YConsole.Success((currentObject ? currentObject.name : "@Root") + " is selected");
                                 } else {
-									yield return YConsole.Error("@Root is already selected");
-                                    yield break;                              
+                                    YConsole.Error("@Root is already selected");
+                                    return;
                                 }
 							} break;
 						default: {
@@ -123,14 +118,14 @@ namespace Yurowm.Console {
 								if (int.TryParse(substring, out index)) {
 									if (index >= 0 && index < childs.Length) {
 										currentObject = childs[index].gameObject;
-										yield return YConsole.Success(currentObject.name + " is selected");
+                                        YConsole.Success(currentObject.name + " is selected");
                                     } else {
-										yield return YConsole.Error("Out or range!");
-										yield break;
+                                        YConsole.Error("Out or range!");
+                                        return;
                                     }
                                 } else {
-									yield return YConsole.Error("Wrong format!");
-                                    yield break;                              
+                                    YConsole.Error("Wrong format!");
+                                    return;
                                 }
 							} break;
 					}
@@ -140,26 +135,26 @@ namespace Yurowm.Console {
 					
 					if (newChild) {
 						currentObject = newChild;
-						yield return YConsole.Success(currentObject.name + " is selected");
+                        YConsole.Success(currentObject.name + " is selected");
                     } else {
-						yield return YConsole.Error("The child is not found");
-                        yield break;
+						YConsole.Error("The child is not found");
+                        return;
 					}
 				}
             }
         }
 
-        IEnumerator PrintDetails(params string[] args) {
+        async UniTask PrintDetails(params string[] args) {
             if (currentObject == null)
-                yield return YConsole.Error("Can't show details of @Root");
+                YConsole.Error("Can't show details of @Root");
             else {
-                yield return YConsole.Success("Details of " + currentObject.name);
+                YConsole.Success("Details of " + currentObject.name);
                 Type type;
                 var components = currentObject.GetComponents<Component>();
                 List<string> lines = new List<string>();
                 foreach (var component in components) {
                     type = component.GetType();
-                    yield return YConsole.Alias(type.Name);
+                    YConsole.Alias(type.Name);
                     foreach (FieldInfo info in type.GetFields()) {
                         var value = info.GetValue(component);
                         lines.Add("   " + info.Name + ": " + (value == null ? "null" : value.ToString()));
@@ -171,7 +166,7 @@ namespace Yurowm.Console {
                                 lines.Add("   " + info.Name + ": " + (value == null ? "null" : value.ToString()));
                             } catch (Exception) {}
                     }
-                    yield return string.Join("\n", lines.ToArray());
+                    YConsole.WriteLine(string.Join("\n", lines.ToArray()));
                     lines.Clear();
                 }
             }
@@ -196,7 +191,7 @@ namespace Yurowm.Console {
 
     public class SetCommands : ICommand {
 
-        Dictionary<string, Func<string[], IEnumerator>> sublogics;
+        Dictionary<string, Func<string[], UniTask>> sublogics;
 
         Vector2Int defaultResolution;
 
@@ -212,33 +207,27 @@ namespace Yurowm.Console {
         }
 
         public SetCommands() {
-            sublogics = new Dictionary<string, Func<string[], IEnumerator>>();
+            sublogics = new Dictionary<string, Func<string[], UniTask>>();
             sublogics.Add("resolution", SetResolution);
             sublogics.Add("framerate", SetFramerate);
             sublogics.Add("vsync", SetVSync);
             defaultResolution = new Vector2Int(Screen.width, Screen.height);
         }
 
-        public override IEnumerator Execute(params string[] args) {
-            IEnumerator sublogic = null;
-
+        public override async UniTask Execute(params string[] args) {
             if (args.Length > 0 && sublogics.ContainsKey(args[0]))
-                sublogic = sublogics[args[0]](args.Skip(1).ToArray());
-
-            if (sublogic != null)
-                while (sublogic.MoveNext())
-                    yield return sublogic.Current;
+                await sublogics[args[0]](args.Skip(1).ToArray());
         }
 
-        IEnumerator SetResolution(params string[] args) {
+        async UniTask SetResolution(params string[] args) {
             if (args.Length > 0 && args[0] == "default") {
                 Screen.SetResolution(defaultResolution.x, defaultResolution.y, true);
-                yield return YConsole.Success(string.Format("Resolution is set to {0}x{1}", defaultResolution.x, defaultResolution.y));
+                YConsole.Success(string.Format("Resolution is set to {0}x{1}", defaultResolution.x, defaultResolution.y));
             }
 
             if (args.Length != 2) {
-                yield return YConsole.Error("set resolution 480 600 (example)");
-                yield break;
+                YConsole.Error("set resolution 480 600 (example)");
+                return;
             }
 
             int width;
@@ -246,43 +235,43 @@ namespace Yurowm.Console {
 
             if (int.TryParse(args[0], out width) && int.TryParse(args[1], out height)) {
                 Screen.SetResolution(width, height, true);
-                yield return YConsole.Success($"Resolution is set to {width}x{height}");
+                YConsole.Success($"Resolution is set to {width}x{height}");
             } else
-                yield return YConsole.Error("Error of parsing. Use only integer values.");
+                YConsole.Error("Error of parsing. Use only integer values.");
         }
 
-        IEnumerator SetFramerate(params string[] args) {
+        async UniTask SetFramerate(params string[] args) {
             if (args.Length > 0 && args[0] == "default") {
                 Application.targetFrameRate = 60;
-                yield return YConsole.Success($"Frame rate is set to {Application.targetFrameRate}");
+                YConsole.Success($"Frame rate is set to {Application.targetFrameRate}");
             }
 
             if (args.Length != 1) {
-                yield return YConsole.Error("set framerate 30 (example)");
-                yield break;
+                YConsole.Error("set framerate 30 (example)");
+                return;
             }
 
             int target;
 
             if (int.TryParse(args[0], out target)) {
                 Application.targetFrameRate = target;
-                yield return YConsole.Success($"Frame rate is set to {Application.targetFrameRate}");
+                YConsole.Success($"Frame rate is set to {Application.targetFrameRate}");
             } else
-                yield return YConsole.Error("Error of parsing. Use only integer values.");
+                YConsole.Error("Error of parsing. Use only integer values.");
         }
 
-        IEnumerator SetVSync(params string[] args) {
+        async UniTask SetVSync(params string[] args) {
             if (args.Length != 1) {
-                yield return YConsole.Error("set vsync 1 (example)");
-                yield break;
+                YConsole.Error("set vsync 1 (example)");
+                return;
             }
 
             if (int.TryParse(args[0], out var target)) {
                 target = target.Clamp(0, 2);
                 QualitySettings.vSyncCount = target;
-                yield return YConsole.Success($"VSync is set to {target}");
+                YConsole.Success($"VSync is set to {target}");
             } else
-                yield return YConsole.Error("Error of parsing. Use only 0, 1 and 2 values.");
+                YConsole.Error("Error of parsing. Use only 0, 1 and 2 values.");
         }
 
         public override string GetName() {

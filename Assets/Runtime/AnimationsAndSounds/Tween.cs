@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Coroutines;
+using Yurowm.Utilities;
 
 namespace Yurowm.Animations {
     public class Tween {
@@ -12,7 +14,7 @@ namespace Yurowm.Animations {
             this.speed = speed;
         }
 
-        IEnumerator process = null;
+        float processSeed;
 
         public void GoToStart() {
             GoTo(0f);
@@ -32,9 +34,9 @@ namespace Yurowm.Animations {
         }
 
         void Start() {
-            if (process == null) {
-                process = Process();
-                process.Run();
+            if (processSeed == 0) {
+                processSeed = YRandom.main.Value();
+                Process().Forget();
             }
         }
                
@@ -50,21 +52,19 @@ namespace Yurowm.Animations {
 
         float currentTime = -1;
         float targetTime = 0;
-        IEnumerator Process() {
-            while (currentTime != targetTime) {
+        async UniTask Process() {
+            var seed = processSeed;
+            while (seed == processSeed && currentTime != targetTime) {
                 currentTime = Mathf.MoveTowards(currentTime, targetTime, Time.deltaTime * speed);
                 update(currentTime);
-                yield return null;
+                await UniTask.Yield();
             }
-            process = null;
+            processSeed = 0;
         }
 
         public void Break() {
             currentTime = -1;
-            if (process != null) {
-                GlobalCoroutine.Stop(process);
-                process = null;
-            }
+            processSeed = 0;
         }
     }
 }

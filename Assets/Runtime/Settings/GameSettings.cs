@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.ComposedPages;
 using Yurowm.Coroutines;
@@ -15,12 +16,12 @@ namespace Yurowm.Serialization {
     public class GameSettings : ISerializable {
         
         [OnLaunch(int.MinValue)]
-        static IEnumerator OnLaunch() {
+        static async UniTask OnLaunch() {
             if (!OnceAccess.GetAccess("GameSettings")) 
-                yield break;
+                return;
             
             if (Instance == null)
-                yield return LoadWithDefaultCryptKey();
+                await LoadWithDefaultCryptKey();
                 
             Instance.Initialize();
             onLoaded?.Invoke(Instance);
@@ -71,7 +72,7 @@ namespace Yurowm.Serialization {
         
         public void Initialize() {
             modules.ForEach(m => m.Initialize());
-            DirtyCheck().Run();
+            DirtyCheck().Forget();
             Reporter.AddReport("Game Settings", new SerializableReport(this));
         }
         
@@ -90,7 +91,7 @@ namespace Yurowm.Serialization {
             isDirty = true;
         }
 
-        IEnumerator DirtyCheck() {
+        async UniTask DirtyCheck() {
             int count = 0;
             while (true) {
                 if (isDirty) {
@@ -98,7 +99,7 @@ namespace Yurowm.Serialization {
                     DebugPanel.Log("Save", "Services", count++);
                     isDirty = false;
                 }
-                yield return null;
+                await UniTask.Yield();
             }
         }
 
@@ -118,13 +119,13 @@ namespace Yurowm.Serialization {
             private set;
         }
         
-        public static IEnumerator LoadWithDefaultCryptKey() {
+        public static UniTask LoadWithDefaultCryptKey() {
             return Load("ehO2MCO0t9ZH4J5Z5Fj3");
         }
         
-        public static IEnumerator Load(string cryptKey = null) {
+        public static async UniTask Load(string cryptKey = null) {
             if (Instance != null) 
-                yield break;
+                return;
 
             Instance = new GameSettings();
             
@@ -135,10 +136,8 @@ namespace Yurowm.Serialization {
             else
                 key = CryptKey.Get(cryptKey);
             
-            string raw = null;
-            yield return TextData.LoadTextRoutine(
+            var raw = await TextData.LoadTextRoutine(
                 Path.Combine("Data", "GameSettings" + Serializer.FileExtension),
-                r => raw = r,
                 TextCatalog.Persistent);
 
             if (!raw.IsNullOrEmpty()) {

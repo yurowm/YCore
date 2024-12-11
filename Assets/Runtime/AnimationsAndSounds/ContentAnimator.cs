@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
 using Yurowm.Spaces;
@@ -71,19 +72,17 @@ namespace Yurowm {
             PlaySound(clipName);
         }
 
-        public IEnumerator WaitPlaying() {
+        public async UniTask WaitPlaying() {
             while (this && IsPlaying() && gameObject.activeInHierarchy)
-                yield return null;
+                await UniTask.Yield();
         }
 
-        public IEnumerator PlayAndWait(string clipName) {
+        public async UniTask PlayAndWait(string clipName) {
             if (GetClip(clipName, out var clip)) {
                 state = new State(clip);
                 PlaySound(clipName);
-                return WaitPlaying();
+                await WaitPlaying();
             }
-
-            return null;
         }
 
         public bool HasClip(string clipName) {
@@ -109,18 +108,17 @@ namespace Yurowm {
                 state.mode = WrapMode.Once;
         }
 
-        public IEnumerator CompleteAndWait(string clipName) {
+        public async UniTask CompleteAndWait(string clipName) {
             Complete(clipName);
             while (IsPlaying(clipName))
-                yield return null;
+                await UniTask.Yield();
         }
 
         public void CompleteAndPlay(string clipName) {
             if (IsPlaying(clipName)) {
                 state.mode = WrapMode.Once;
-                WaitPlaying().ContinueWith(() => Play(clipName)).Run();
-            }
-            else
+                WaitPlaying().ContinueWith(() => Play(clipName)).Forget();
+            } else
                 Play(clipName);
         }
 

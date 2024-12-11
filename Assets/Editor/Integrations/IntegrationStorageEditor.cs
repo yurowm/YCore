@@ -83,6 +83,8 @@ namespace Yurowm.Integrations {
         }
 
         public override string GetItemName(Integration item) {
+            if (!item.name.IsNullOrEmpty())
+                return $"{item.GetName()} ({item.name.Italic()})";
             return item.GetName();
         }
 

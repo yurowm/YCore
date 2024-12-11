@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
@@ -68,7 +69,7 @@ namespace Yurowm.Spaces {
 
         public override void OnAddToSpace(Space space) {
             base.OnAddToSpace(space);
-            Update().Run(space.coroutine, order: UPDATE_ORDER);
+            Update().Forget();
             
             // #if FMOD
             // if (!RuntimeManager.HasListener[0])
@@ -104,9 +105,9 @@ namespace Yurowm.Spaces {
             SetUICamera.Remove(camera);
         }
 
-        public IEnumerator Update() {
+        public async UniTask Update() {
             while (IsAlive()) {
-                yield return null;
+                await UniTask.Yield();
                 
                 #if FMOD
                 RuntimeManager.SetListenerLocation(body.gameObject);

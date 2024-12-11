@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using Yurowm.Extensions;
 using Yurowm.Serialization;
 
@@ -15,9 +16,9 @@ namespace Yurowm.Integrations {
         public abstract bool GetData(string key, out bool data);
         public abstract bool GetData(string key, out string data);
 
-        public IEnumerator WaitReady() {
+        public async UniTask WaitReady() {
             while (!IsReady())
-                yield return null;
+                await UniTask.Yield();
         }
         
         public class Data: ISerializable {

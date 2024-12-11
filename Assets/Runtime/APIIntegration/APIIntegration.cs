@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -19,21 +20,21 @@ namespace Yurowm.Services {
         
         protected bool isConfigured = true;
         
-        public IEnumerator Request<T>(string name, T body, MethodType method,  Action<T> success, Action<string> failed = null) {
-            return Request<T, T>(name, body, method, success, failed);
+        public async UniTask Request<T>(string name, T body, MethodType method,  Action<T> success, Action<string> failed = null) {
+            await Request<T, T>(name, body, method, success, failed);
         }
         
-        public IEnumerator Request<B, R>(string name, B body, MethodType method, Action<R> success, Action<string> failed = null) {
+        public async UniTask Request<B, R>(string name, B body, MethodType method, Action<R> success, Action<string> failed = null) {
             #if UNITY_WEBGL
-            return RequestUnity(name, body, method, success, failed);
+            await RequestUnity(name, body, method, success, failed);
             #else
-            return RequestHTTPClient(name, body, method, success, failed);
+            await RequestHTTPClient(name, body, method, success, failed);
             #endif
         }
 
-        IEnumerator RequestUnity<B, R>(string name, B body, MethodType method, Action<R> success, Action<string> failed = null) {
+        async UniTask RequestUnity<B, R>(string name, B body, MethodType method, Action<R> success, Action<string> failed = null) {
             while (!isConfigured)
-                yield return null; 
+                await UniTask.Yield();
         
             var request = new UnityWebRequest(Path.Combine(GetHost(), name), method.ToString());
             Debug.Log($"Request: {request.url}: {method}");
@@ -50,7 +51,7 @@ namespace Yurowm.Services {
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
             
-            yield return request.SendWebRequest();
+            await request.SendWebRequest();
         
             if (request.result == UnityWebRequest.Result.Success) {
                 var result = JsonConvert.DeserializeObject<R>(request.downloadHandler.text);
@@ -62,9 +63,9 @@ namespace Yurowm.Services {
             }
         }
         
-        public IEnumerator RequestHTTPClient<B, R>(string name, B body, MethodType method, Action<R> success, Action<string> failed = null) {
+        public async UniTask RequestHTTPClient<B, R>(string name, B body, MethodType method, Action<R> success, Action<string> failed = null) {
             while (!isConfigured)
-                yield return null; 
+                await UniTask.Yield(); 
             
             if (httpClient == null) {
                 httpClient = new HttpClient();
@@ -81,37 +82,24 @@ namespace Yurowm.Services {
             
             switch (method) {
                 case MethodType.GET: 
-                    yield return CoroutineExtensions.RunAsync(
-                        () => httpClient.GetAsync(name),
-                        r => message = r);
+                    message = await httpClient.GetAsync(name);
                     break;
                 case MethodType.POST: 
-                    yield return CoroutineExtensions.RunAsync(
-                        () => httpClient.PostAsync(name, content), 
-                        r => message = r);
+                    message = await httpClient.PostAsync(name, content);
                     break;
                 case MethodType.PUT: 
-                    yield return CoroutineExtensions.RunAsync(
-                        () => httpClient.PutAsync(name, content), 
-                        r => message = r);
+                    message = await httpClient.PutAsync(name, content);
                     break;
                 case MethodType.DELETE:
-                    yield return CoroutineExtensions.RunAsync(
-                        () => httpClient.DeleteAsync(name), 
-                        r => message = r);
+                    message = await httpClient.DeleteAsync(name);
                     break;
                 default: throw new NotSupportedException($"The method type {method} is not supported.");
             }
-             
-            
+
             if (message == null)
-                yield break;
+                return;
 
-            var readTask = message.Content.ReadAsStringAsync();
-            
-            yield return readTask.WaitInstruction();
-
-            var responseContent = readTask.Result;
+            var responseContent = await message.Content.ReadAsStringAsync();
 
             if (message.IsSuccessStatusCode) {
                 var result = JsonConvert.DeserializeObject<R>(responseContent);

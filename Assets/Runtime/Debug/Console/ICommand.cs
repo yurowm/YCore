@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Extensions;
 using Yurowm.Utilities;
@@ -11,7 +14,7 @@ using Yurowm.Utilities;
 namespace Yurowm.Console {
     public abstract class ICommand {
         public abstract string GetName();
-        public abstract IEnumerator Execute(params string[] args);
+        public abstract UniTask Execute(params string[] args);
         public virtual string Help() {
             return null;
         }
@@ -53,12 +56,12 @@ namespace Yurowm.Console {
             regex = new Regex(expression);
         }
 
-        public bool TryExecute(string command, out IEnumerator logic) {
+        public async UniTask<bool> TryExecute(string command) {
             Match match = regex.Match(command);
             Group group = null;
             if (regex.IsMatch(command)) {
                 #region Extruct Parameters
-                List<object> parameters = new List<object>();
+                var parameters = new List<object>();
                 foreach (var parameter in method.GetParameters()) {
                     group = match.Groups["arg" + parameters.Count];
 
@@ -72,45 +75,30 @@ namespace Yurowm.Console {
                         parameters.Add(float.Parse(group.Value));
                 }
                 #endregion
-                if (method.ReturnType == typeof(IEnumerator)) {
+                if (method.ReturnType == typeof(UniTask)) {
                     try {
-                        logic = method.Invoke(null, parameters.ToArray()) as IEnumerator;
+                        await (UniTask) method.Invoke(null, parameters.ToArray());
                     } catch (Exception e) {
                         Debug.LogException(e);
-                        logic = null;
                         return false;
                     }
-                } else if (method.ReturnType == typeof(string))
-                    logic = Execute(() => (string) method.Invoke(null, parameters.ToArray()));
-                else
-                    logic = Execute(() => method.Invoke(null, parameters.ToArray()));
+                } else
+                    await Execute(() => method.Invoke(null, parameters.ToArray()));
                 return true;
             }
-            logic = null;
             return false;
         }
 
-        IEnumerator Error(string text) {
-            yield return YConsole.Error(text);
+        async UniTask Error(string text) {
+            YConsole.Error(text);
         }
 
-        IEnumerator Execute(Action action) {
+        async UniTask Execute(Action action) {
             try {
                 action.Invoke();
             } catch (Exception e) {
                 Debug.LogException(e);
             }
-            yield break;
-        }
-
-        IEnumerator Execute(Func<string> func) {
-            string result = null;
-            try {
-                result = func.Invoke();
-            } catch (Exception e) {
-                Debug.LogException(e);
-            }
-            yield return result;
         }
 
         public string Help() {
@@ -137,46 +125,35 @@ namespace Yurowm.Console {
             }
         }
 
-        readonly static Regex wordSplitter = new Regex(@"\s+");
-        public static IEnumerator Execute(string command, Action<string> output) {
+        static readonly Regex wordSplitter = new(@"\s+");
+        public static async UniTask Execute(string command) {
+            
             string[] words = wordSplitter.Split(command);
             if (words.Length > 0) {
-                IEnumerator logic = null;
                 if (commands.ContainsKey(words[0].ToLower())) {
                     ICommand c = commands[words[0].ToLower()];
-                    logic = c.Execute(words.Skip(1).ToArray());
-                } else if (!quickCommands.Any(c => c.TryExecute(command, out logic))) { 
-                    output.Invoke("This command is not found");
-                    yield break;
-                }
-
-                Exception exception = null;
-
-                while (true) {
                     try {
-                        if (!logic.MoveNext())
-                            break;
+                        await c.Execute(words.Skip(1).ToArray());
                     } catch (Exception e) {
-                        exception = e;
-                        break;
+                        YConsole.Error(e.ToString());
+                        throw;
                     }
+                } else {
+                    foreach (var c in quickCommands)
+                        if (await c.TryExecute(command))
+                            return;
 
-                    if (logic.Current is string) output(logic.Current as string);
-                    yield return logic.Current;
+                    YConsole.Error("The command is not found");
                 }
-
-                if (exception != null)
-                    output(YConsole.Error(exception.ToString()));
             }
         }
     }
 
     public class ClearCommand : ICommand {
-        public override IEnumerator Execute(params string[] args) {
+        public override async UniTask Execute(params string[] args) {
             YConsole.Instance.builder = new System.Text.StringBuilder();
             YConsole.Instance.output.text = "";
             YConsole.Instance.Hello();
-            yield return null;
         }
 
         public override string GetName() {
@@ -189,9 +166,8 @@ namespace Yurowm.Console {
     }
 
     public class HideCommand : ICommand {
-        public override IEnumerator Execute(params string[] args) {
+        public override async UniTask Execute(params string[] args) {
             YConsole.Instance.gameObject.SetActive(false);
-            yield return null;
         }
 
         public override string GetName() {
@@ -204,8 +180,8 @@ namespace Yurowm.Console {
     }
 
     public class HelpCommand : ICommand {
-        public override IEnumerator Execute(params string[] args) {
-            return Commands.commands.Values
+        public override async UniTask Execute(params string[] args) {
+            Commands.commands.Values
                 .Select(c => c.Help())
                 .Concat(Commands.quickCommands
                     .Select(c => c.Help()))
@@ -214,7 +190,7 @@ namespace Yurowm.Console {
                 .Where(h => !h.IsNullOrEmpty())
                 .Select(h => h.Trim())
                 .OrderBy(h => h)
-                .GetEnumerator();
+                .ForEach(YConsole.WriteLine);
         }
 
         public override string GetName() {

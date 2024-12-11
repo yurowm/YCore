@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Controls;
 using Yurowm.Coroutines;
@@ -40,7 +41,7 @@ namespace Yurowm.Spaces {
                 controlCamera = camera.camera.GetComponent<Camera>()
             };
             context.SetArgument(controls);
-            controls.ControlRoutine(this).Run(space.coroutine, order: SpaceCamera.UPDATE_ORDER - 1);
+            controls.ControlRoutine(this).Forget();
             if (limiter != null) {
                 limiter.SetupCamera(camera);
                 Zoom(camera.viewSizeVertical);
@@ -173,7 +174,7 @@ namespace Yurowm.Spaces {
 
         public void OnReleaseControl() {
             drag = false;
-            NormalizeCamera().Run();
+            NormalizeCamera().Forget();
         }
 
         public void ScrollControl(float scroll) {
@@ -189,7 +190,7 @@ namespace Yurowm.Spaces {
             return camera.Zoom(limiter?.CropZoom(zoom) ?? zoom);
         }
 
-        IEnumerator NormalizeCamera() {
+        async UniTask NormalizeCamera() {
             //float target = camera.viewSize;
             //if (limiter != null)
             //    target = limiter.CropZoom(target);
@@ -202,7 +203,7 @@ namespace Yurowm.Spaces {
                 //camera.Zoom(Mathf.MoveTowards(camera.viewSize, target, Zspeed * Time.deltaTime / duration));
                 if (allowToRotate)
                     camera.direction = Mathf.MoveTowardsAngle(camera.direction, 0, Rspeed * Time.deltaTime / duration);
-                yield return null;
+                await UniTask.Yield();
             }
         }
 
@@ -229,7 +230,7 @@ namespace Yurowm.Spaces {
 
         #region Show Position
 
-        public IEnumerator ShowPositionLogic(Vector2 position, float zoom = -1, float duration = .25f, EasingFunctions.Easing easing = EasingFunctions.Easing.InOutCubic) {
+        public async UniTask ShowPositionLogic(Vector2 position, float zoom = -1, float duration = .25f, EasingFunctions.Easing easing = EasingFunctions.Easing.InOutCubic) {
             velocity = Vector2.zero;
             
             duration = duration.ClampMin(1f / 100000);
@@ -246,7 +247,7 @@ namespace Yurowm.Spaces {
                 var eT = t.Ease(easing);
                 camera.Zoom(Mathf.Lerp(zoomCurrent, zoomTarget, eT));
                 this.position = Vector2.Lerp(positionStart, position, eT);
-                yield return null;
+                await UniTask.Yield();
             }
             
             camera.Zoom(zoomTarget);

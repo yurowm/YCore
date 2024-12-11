@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Cysharp.Threading.Tasks;
 using UnityEditor;
 using Yurowm.Coroutines;
 using Yurowm.Dashboard;
@@ -56,14 +57,14 @@ namespace Yurowm {
             
         }
 
-        static IEnumerator Shot(int size) {
-            return Shot(new Order {
+        static async UniTask Shot(int size) {
+            await Shot(new Order {
                 superSize = size,
                 name = $"Screen_{Application.productName}"
             });
         }
         
-        static IEnumerator Shot(Order order) {
+        static async UniTask Shot(Order order) {
             CreateFolder();
 
             string fileName = $"{order.name ?? "Screenshot"}_{DateTime.Now}";
@@ -73,15 +74,15 @@ namespace Yurowm {
             var file = new FileInfo(Path.Combine(folder.FullName, fileName));
             if (order.resolution.HasValue) {
                 Screen.SetResolution(order.resolution.Value.X, order.resolution.Value.Y, FullScreenMode.Windowed);
-                yield return new WaitForEndOfFrame();
+                await UniTask.WaitForEndOfFrame();
             }
              
             ScreenCapture.CaptureScreenshot(file.FullName, order.superSize);
         }
         
-        static IEnumerator Shot(IEnumerable<Order> orders) {
+        static async UniTask Shot(IEnumerable<Order> orders) {
             foreach (var order in orders)
-                yield return Shot(order);
+                await Shot(order);
         }
 
         struct Order {
@@ -93,22 +94,22 @@ namespace Yurowm {
         
         [MenuItem("Tools/Yurowm/Screenshot/Create x1 %1")]
         static void Shot1() {
-            Shot(1).Run();
+            Shot(1).Forget();
         }
             
         [MenuItem("Tools/Yurowm/Screenshot/Create x2 %2")]
         static void Shot2() {
-            Shot(2).Run();
+            Shot(2).Forget();
         }
 
         [MenuItem("Tools/Yurowm/Screenshot/Create x5 %5")]
         static void Shot5() {
-            Shot(5).Run();
+            Shot(5).Forget();
         }
 
         [MenuItem("Tools/Yurowm/Screenshot/Create x10 %0")]
         static void Shot10() {
-            Shot(10).Run();
+            Shot(10).Forget();
         }
 
         [MenuItem("Tools/Yurowm/Screenshot/Apple App Store")]
@@ -120,7 +121,7 @@ namespace Yurowm {
                 new Order { name = "iPad_12.9", resolution = new int2(2048, 2732) }
             };
             
-            Shot(orders).Run();
+            Shot(orders).Forget();
         }
     }
 }

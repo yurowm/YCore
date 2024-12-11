@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Cysharp.Threading.Tasks;
 using Yurowm.Integrations;
 using Yurowm.Serialization;
 
@@ -7,10 +8,9 @@ namespace Yurowm.Analytics {
         
         public bool trackAll = true;
         
-        protected override IEnumerator Initialize() {
+        protected override async UniTask Initialize() {
             Analytic.integrations.Add(this);
             Analytic.log = true;
-            yield break;
         }
 
         public abstract void Event(string eventName);

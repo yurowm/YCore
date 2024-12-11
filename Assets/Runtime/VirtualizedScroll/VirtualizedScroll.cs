@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Yurowm.Coroutines;
@@ -379,16 +380,18 @@ namespace Yurowm.UI {
                 this.position = position;  
                 Build();
             } else {
-                centering = Centering(position, duration);                    
-                centering.Run();
+                centeringSeed = YRandom.main.Value();                    
+                Centering(position, duration).Forget();
             }
         }
         
-        IEnumerator centering = null;
+        float centeringSeed;
         
-        IEnumerator Centering(float targetPosition, float duration) {
+        async UniTask Centering(float targetPosition, float duration) {
             if (duration <= 0)
-                yield break;
+                return;
+            
+            var seed = centeringSeed;
 
             targetPosition = ClampPosition(targetPosition);
             
@@ -396,14 +399,12 @@ namespace Yurowm.UI {
             
             velocity = 0;
             
-            for (var t = 0f; t < 1 && isActiveAndEnabled && !drag; t += Time.unscaledDeltaTime / duration) {
+            for (var t = 0f; t < 1 && isActiveAndEnabled && !drag && seed == centeringSeed; t += Time.unscaledDeltaTime / duration) {
                 position = YMath.Lerp(start, targetPosition, t.Ease(EasingFunctions.Easing.InOutCubic));
                 position = ClampPosition(position);
                 Build();
-                yield return null;
+                await UniTask.Yield();
             }
-
-            centering = null;
         }
 
         #endregion
@@ -441,10 +442,10 @@ namespace Yurowm.UI {
             
             velocity = GetDelta(eventData) / Time.unscaledDeltaTime;
 
-            Inertia().Run();
+            Inertia().Forget();
         }
         
-        IEnumerator Inertia() {
+        async UniTask Inertia() {
          
             var bounced = false;
             float bouncedPosition = 0;
@@ -485,11 +486,12 @@ namespace Yurowm.UI {
 
                     velocity -= smooth * Time.unscaledDeltaTime * edgeBouncing;
                 }
-                
-                yield return null;
+
+                await UniTask.Yield();
             }
 
-            if (!bounced) yield break;
+            if (!bounced) 
+                return;
             
             var startPosition = position;
             
@@ -497,7 +499,7 @@ namespace Yurowm.UI {
                 position = YMath.Lerp(startPosition, bouncedPosition, t.Ease(EasingFunctions.Easing.OutCubic));
                 Build();
             
-                yield return null;
+                await UniTask.Yield();
             }
             
             if (Allowed()) {

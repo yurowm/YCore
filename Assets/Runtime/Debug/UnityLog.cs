@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Yurowm.Coroutines;
 using Yurowm.Utilities;
 
@@ -14,18 +15,18 @@ namespace Yurowm.YDebug {
         #endif
         
         public UnityLog() {
-            Update().Run();
+            Update().Forget();
         }
         
-        Queue<IMessage> queue = new Queue<IMessage>();
+        Queue<IMessage> queue = new();
         
-        IEnumerator Update() {
+        async UniTask Update() {
             while (true) {
                 while (queue.Count > 0) {
                     LogMessage(queue.Dequeue());
                 }
                 
-                yield return null;
+                await UniTask.Yield();
             }
         }
         

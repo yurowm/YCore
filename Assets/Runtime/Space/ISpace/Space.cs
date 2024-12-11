@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Scripting;
 using Yurowm.ContentManager;
@@ -37,8 +38,8 @@ namespace Yurowm.Spaces {
                 _context.SetArgument(GetType(), this);
             }
         }
-        public Clickables clickables = new Clickables();
-        public CoroutineCore coroutine = new CoroutineCore();
+        
+        public Clickables clickables = new();
         
         [OnLaunch]
         static void InitializeOnLoad() {
@@ -83,10 +84,9 @@ namespace Yurowm.Spaces {
         public virtual void Initialize() {
             time = new SpaceTime();
             context.SetArgument(time);
-            context.SetArgument(coroutine);
             context.SetArgument(this);
             context.SetArgument<Space>(this);
-            time.Updating().Run(coroutine);
+            time.Updating().Forget();
             
             DebugPanel.Log($"{this}_timeScale", "Space", new DebugVariableRange<float>(
                     () => time.Scale,
@@ -124,9 +124,7 @@ namespace Yurowm.Spaces {
 
             all.Add(result);
             
-            result.SpaceUpdate(CoroutineCore.Loop.Update).Run(loop: CoroutineCore.Loop.Update);
-            result.SpaceUpdate(CoroutineCore.Loop.FixedUpdate).Run(loop: CoroutineCore.Loop.FixedUpdate);
-            result.SpaceUpdate(CoroutineCore.Loop.LateUpdate).Run(loop: CoroutineCore.Loop.LateUpdate);
+            result.SpaceUpdate().Forget();
 
             result.Initialize();
             
@@ -151,7 +149,7 @@ namespace Yurowm.Spaces {
         float targetTimeScale = 1;
         float timeScaleChangingSpeed = 3;
 
-        IEnumerator timeScaleChangingLogic = null;
+        UniTask? timeScaleChangingLogic = null;
         
         public bool TimeScaleChanging => timeScaleChangingLogic != null;
         
@@ -174,14 +172,14 @@ namespace Yurowm.Spaces {
 
             if (!TimeScaleChanging) {
                 timeScaleChangingLogic = TimeScaleChangingLogic();
-                timeScaleChangingLogic.Run(coroutine);
+                timeScaleChangingLogic.Value.Forget();
             }
         }
 
-        IEnumerator TimeScaleChangingLogic() {
+        async UniTask TimeScaleChangingLogic() {
             for (; time.Scale != targetTimeScale; time.Scale = time.Scale.MoveTowards(targetTimeScale, Time.unscaledDeltaTime * timeScaleChangingSpeed)) {
                 SetTimeScale(time.Scale);
-                yield return null;
+                await UniTask.Yield();
             }
             
             SetTimeScale(targetTimeScale);
@@ -195,14 +193,14 @@ namespace Yurowm.Spaces {
         /// Подготовливаем Space к созданию в первый раз. Creation должен вызвать Complete.
         /// Creation вызывается как альтернатива десериализатора, который создает то же самое, но на основе сохранения.
         /// </summary>
-        public virtual IEnumerator Creation() {
-            yield return Complete();
+        public virtual async UniTask Creation() {
+            await Complete();
         }
 
         /// <summary>
         /// Генерируем все объекты пространства.
         /// </summary>
-        public abstract IEnumerator Complete();
+        public abstract UniTask Complete();
 
         bool _destroyed = false;
         public virtual bool IsActual() {
@@ -271,15 +269,13 @@ namespace Yurowm.Spaces {
 
         #region Update
 
-        IEnumerator SpaceUpdate(CoroutineCore.Loop loop) {
+        async UniTask SpaceUpdate() {
             while (!_destroyed) {
                 if (enabled) {
-                    coroutine.Update(loop);
-                    if (loop == CoroutineCore.Loop.Update)
-                        jobs.CastIfPossible<IUpdateJob>().ForEach(Updater);
+                    jobs.CastIfPossible<IUpdateJob>().ForEach(Updater);
                     OnUpdate();
                 }
-                yield return null;
+                await UniTask.Yield();
             }
         }
         
@@ -308,8 +304,6 @@ namespace Yurowm.Spaces {
             
             context.Destroy();
 
-            coroutine.Clear();
-            
             onDestroyed?.Invoke();
             
             busy = false;
@@ -406,11 +400,11 @@ namespace Yurowm.Spaces {
         public static void Show<S>(Action<S> onCreate = null) where S : Space {
             Showing(typeof(S), space => {
                 onCreate?.Invoke(space as S);
-            }).Run();
+            }).Forget();
         }
 
         public static void Show(Type spaceType, Action<Space> onCreate = null) {
-            Showing(spaceType, onCreate).Run();
+            Showing(spaceType, onCreate).Forget();
         }
 
         #region Busy
@@ -434,7 +428,7 @@ namespace Yurowm.Spaces {
         
         #endregion
 
-        public static IEnumerator Showing(Type spaceType, Action<Space> onCreate = null) {
+        public static async UniTask Showing(Type spaceType, Action<Space> onCreate = null) {
             
             var space = all.FirstOrDefault(spaceType.IsInstanceOfType);
             
@@ -444,7 +438,7 @@ namespace Yurowm.Spaces {
             }
 
             if (!space) {
-                yield return Prepare(spaceType, s => {
+                await Prepare(spaceType, s => {
                     space = s;
                     onCreate?.Invoke(s);
                 });
@@ -454,18 +448,19 @@ namespace Yurowm.Spaces {
                 space.enabled = true;
         }
         
-        public static IEnumerator Prepare(Type spaceType, Action<Space> onCreate = null) {
+        public static async UniTask Prepare(Type spaceType, Action<Space> onCreate = null) {
             if (spaceType == null || !typeof(Space).IsAssignableFrom(spaceType))
                 throw new Exception("Wrong Space type");
             
             var space = Create(spaceType);
-            if (!space) yield break;
+            if (!space) 
+                return;
             
             onCreate?.Invoke(space);
             
             space.busy = true;
             
-            yield return space.Creation();
+            await space.Creation();
             
             space.busy = false;
             
@@ -519,11 +514,10 @@ namespace Yurowm.Spaces {
         
         public Action<float> onScaleChanged = delegate {};
         
-        
-        public IEnumerator Updating() {
+        public async UniTask Updating() {
             while (true) {
                 Update();
-                yield return null;
+                await UniTask.Yield();
             }
         }
         
@@ -557,24 +551,24 @@ namespace Yurowm.Spaces {
             SetTime(0);
         }
 
-        public IEnumerator Wait(float duration) {
+        public async UniTask Wait(float duration) {
             var triggerTime = AbsoluteTime + duration;
             
             while (triggerTime > AbsoluteTime)
-                yield return null;
+                await UniTask.Yield();
         }
         
         public interface ISensitiveComponent {
             void OnChangeTime(SpaceTime time);
         }
 
-        public IEnumerator Animate(float duration, Action<float> action) {
+        public async UniTask Animate(float duration, Action<float> action) {
             if (action == null)
-                yield break;
+                return;
             
             for (var t = 0f; t < 1f; t += Delta / duration) {
                 action.Invoke(t);
-                yield return null;
+                await UniTask.Yield();
             }
             action.Invoke(1f);
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
@@ -24,14 +25,14 @@ namespace Yurowm.Integrations {
         static Action<Integration> onInitialize = delegate {};
 
         [OnLaunch(INITIALIZE_ORDER)]
-        public static IEnumerator InitializeOnLoad() {
-            if (!OnceAccess.GetAccess("Integration")) yield break;
+        public static async UniTask InitializeOnLoad() {
+            if (!OnceAccess.GetAccess("Integration")) 
+                return;
             
-            yield return storage.items
+            await UniTask.WhenAll(storage.items
                 .Where(i => i.active && i.AvailabilityFilter())
                 .ToArray()
-                .Select(i => i.Initialize())
-                .Parallel();
+                .Select(i => i.Initialize()));
             
             isInitialized = true;
             
@@ -42,9 +43,7 @@ namespace Yurowm.Integrations {
         
         public bool active = true;
         
-        protected virtual IEnumerator Initialize() {
-            yield break;
-        }
+        protected virtual async UniTask Initialize() { }
 
         public abstract string GetName();
 

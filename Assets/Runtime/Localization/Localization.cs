@@ -5,6 +5,7 @@ using System.IO;
 using System;
 using System.Reflection;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using Yurowm.Console;
 using Yurowm.Coroutines;
 using Yurowm.DebugTools;
@@ -72,22 +73,21 @@ namespace Yurowm.Localizations {
         }
         
         [OnLaunch(int.MinValue)]
-        static IEnumerator OnLaunch() {
+        static async UniTask OnLaunch() {
             if (OnceAccess.GetAccess("Localization")) {
-                yield return LanguageContent.GetSupportedLanguagesProgess(
-                    r => supportLanguages = r);
+                supportLanguages = await LanguageContent.GetSupportedLanguagesProgess();
 
                 defaultLanguage = Language.English;
 
                 foreach (var l in supportLanguages) 
-                    DebugPanel.Log(l.ToString(), "Localization", () => LearnLanguage(l).Run());
+                    DebugPanel.Log(l.ToString(), "Localization", () => LearnLanguage(l).Forget());
                 
                 // #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 //
                 #region Default logic
                 
                 if (!supportLanguages.Contains(defaultLanguage))
-                    defaultLanguage = supportLanguages[0];
+                    defaultLanguage = supportLanguages.IsEmpty() ? Language.Unknown : supportLanguages.First();
                     
                 if (language == Language.Unknown)
                     language = (Language) (int) Application.systemLanguage;
@@ -112,7 +112,7 @@ namespace Yurowm.Localizations {
 
                 // #endif
                 
-                yield return LearnLanguage(language);
+                await LearnLanguage(language);
             }
         }
 
@@ -127,15 +127,15 @@ namespace Yurowm.Localizations {
         }
 
         [QuickCommand("localize", "test", "Show localization for 'test' key")]
-        static string ShowLocalization(string key) {
-            return YConsole.Alias(content[key]);
+        static void ShowLocalization(string key) { 
+            YConsole.Alias(content[key]);
         }
 
-        public static IEnumerator LearnLanguage(Language language) {
+        public static async UniTask LearnLanguage(Language language) {
             if (content != null && content.language == language)
-                yield break;
+                return;
             Localization.language = language;
-            yield return LanguageContent.LoadProcess(Localization.language, c => content = c, true);
+            content = await LanguageContent.LoadProcess(Localization.language, true);
             UIRefresh.Invoke();
         }
         
@@ -213,18 +213,17 @@ namespace Yurowm.Localizations {
         
         #region Supported Languages
         
-        public static IEnumerator GetSupportedLanguagesProgess(Action<Language[]> getResult) {
-            if (getResult == null)
-                yield break;
-            
-            string raw = null;
-            yield return TextData.LoadTextRoutine(Path.Combine("Languages", iniFileName), r => raw = r);
+        public static async UniTask<Language[]> GetSupportedLanguagesProgess() {
+            var raw = await TextData.LoadTextRoutine(Path.Combine("Languages", iniFileName));
 
-            getResult.Invoke(raw
+            if (raw.IsNullOrEmpty())
+                return Array.Empty<Language>();
+            
+            return raw
                 .Split(',')
                 .Select(t => Enum.TryParse(t.Trim(), out Language language) ? language : Language.Unknown)
                 .Where(l => l != Language.Unknown)
-                .ToArray());
+                .ToArray();
         }
 
         public static IEnumerable<Language> GetSupportedLanguages() {
@@ -265,15 +264,11 @@ namespace Yurowm.Localizations {
 
         #endregion
 
-        public static IEnumerator LoadProcess(Language language, Action<LanguageContent> getResult, bool createNew) {
-            string raw = null;
-            yield return TextData.LoadTextRoutine(
-                Path.Combine("Languages", language + Serializer.FileExtension),
-                r => raw = r);
+        public static async UniTask<LanguageContent> LoadProcess(Language language, bool createNew) {
+            string raw = await TextData.LoadTextRoutine(
+                Path.Combine("Languages", language + Serializer.FileExtension));
             
-            var result = Load(raw, language, createNew);
-            if (result != null) 
-                getResult.Invoke(result);
+            return Load(raw, language, createNew);
         }
 
         public static LanguageContent LoadFast(Language language, bool createNew) {
@@ -285,7 +280,7 @@ namespace Yurowm.Localizations {
             if (raw.IsNullOrEmpty())
                 return createNew ? CreateEmpty() : null;
 
-            var result = Serializer.FromJson<LanguageContent>(raw) ?? new ();
+            var result = Serializer.Instance.FromJson<LanguageContent>(raw) ?? new ();
             result.language = language;
             return result;
         }

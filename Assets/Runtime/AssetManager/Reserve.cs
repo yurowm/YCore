@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.ContentManager;
 using Yurowm.Coroutines;
@@ -102,9 +103,9 @@ namespace Yurowm {
 
         static Dictionary<ContextedBehaviour, int> prepareOrder = new Dictionary<ContextedBehaviour, int>();
 
-        static IEnumerator prepareLogic;
-        static IEnumerator PrepareLogic() {
-            DelayedAccess frameSkip = new DelayedAccess(1f / 30f);
+        static UniTask? prepareLogic;
+        static async UniTask PrepareLogic() {
+            var frameSkip = new DelayedAccess(1f / 30f);
             
             var created = new List<ContextedBehaviour>();
             var inPool = new List<ContextedBehaviour>();
@@ -151,7 +152,7 @@ namespace Yurowm {
                 if (countToEmit == 0)
                     prepareOrder.Remove(reference);
                 else 
-                    yield return null;
+                    await UniTask.Yield();
             }
             
             prepareLogic = null;
@@ -172,7 +173,7 @@ namespace Yurowm {
             
             if (prepareLogic == null) {
                 prepareLogic = PrepareLogic();
-                prepareLogic.Run();
+                prepareLogic.Value.Forget();
             }
         }
 

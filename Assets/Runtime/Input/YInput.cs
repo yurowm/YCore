@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
+using Yurowm.Utilities;
 using I = UnityEngine.Input;
 
 namespace Yurowm.Controls {
@@ -22,9 +24,9 @@ namespace Yurowm.Controls {
             
             buttons.Add(button);
             
-            if (logic == null) {
-                logic = Logic();
-                logic.Run();
+            if (logicSeed == 0) {
+                logicSeed = YRandom.main.Value();
+                Logic().Forget();
             }
         }
         
@@ -39,8 +41,8 @@ namespace Yurowm.Controls {
             
             buttons.Remove(button);
             
-            if (logic != null && buttons.IsEmpty())
-                logic = null;
+            if (logicSeed != 0 && buttons.IsEmpty())
+                logicSeed = 0;
         }
         
         public static void ClearButton(KeyCode key) {
@@ -51,17 +53,17 @@ namespace Yurowm.Controls {
             
             buttons.RemoveAll(b => b.key == key);
             
-            if (logic != null && buttons.IsEmpty())
-                logic = null;
+            if (logicSeed != 0 && buttons.IsEmpty())
+                logicSeed = 0;
         }
         
-        static IEnumerator logic = null;
+        static float logicSeed = 0;
         static bool busy = false;
         static Queue<Action> onComplete = new Queue<Action>();
         
-        static IEnumerator Logic() {
-            var current = logic;
-            while (logic == current) {
+        static async UniTask Logic() {
+            var seed = logicSeed;
+            while (seed == logicSeed) {
                 busy = true;
                 foreach (var button in buttons) {
                     if (!button.enabled || button.onClick == null || button.key == KeyCode.None)
@@ -88,7 +90,7 @@ namespace Yurowm.Controls {
                 while (onComplete.Count > 0)
                     onComplete.Dequeue()();
                 
-                yield return null;
+                await UniTask.Yield();
             }
         }
         

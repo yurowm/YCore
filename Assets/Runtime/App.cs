@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Yurowm.Coroutines;
 using Yurowm.DebugTools;
@@ -30,9 +31,9 @@ namespace Yurowm.Core {
         static AppBehaviour appBehaviour;
 
         [OnLaunch(int.MinValue)]
-        static IEnumerator StartLaunch() {
+        static async UniTask StartLaunch() {
             if (!OnceAccess.GetAccess("App_Min")) 
-                yield break;
+                return;
             
             #if UNITY_EDITOR
             data = new GameData("PlayerEditor");
@@ -42,7 +43,7 @@ namespace Yurowm.Core {
                 data = new GameData("Player", "NixM20TSkARg1ax");
             #endif
             
-            yield return data.Load();
+            await data.Load();
         }
 
         [OnLaunch(int.MinValue)]
@@ -62,7 +63,7 @@ namespace Yurowm.Core {
             appBehaviour = new GameObject("App").AddComponent<AppBehaviour>();
             appBehaviour.gameObject.hideFlags = HideFlags.HideAndDontSave;
             
-            UILogic().Run();
+            UILogic().Forget();
         }
 
         public static bool IsFirstAppLaunch() {
@@ -93,7 +94,7 @@ namespace Yurowm.Core {
         
         public static bool isTablet => IsTablet();
 
-        static IEnumerator UILogic() {
+        static async UniTask UILogic() {
             Vector2 screenSize = default;
             ScreenOrientation screenOrientation = default;
             
@@ -116,7 +117,7 @@ namespace Yurowm.Core {
                     onScreenResize.Invoke();
                 }
                 
-                yield return null;
+                await UniTask.Yield();
             }
         }
         
@@ -235,14 +236,14 @@ namespace Yurowm.Core {
 
         #endregion
 
-        public static IEnumerator LoadingShow() {
+        public static async UniTask LoadingShow() {
             var page = Page.GetCurrent();
             if (page != null && page.HasTag("Loading")) 
-                yield break;
+                return;
             
             page = Page.Get("Loading");
             if (page != null) {
-                yield return page.ShowAndWait();
+                await page.ShowAndWait();
                 page.Clean();
             }
         }

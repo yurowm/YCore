@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Profiling;
@@ -621,15 +622,15 @@ namespace Yurowm.Extensions {
         
         #region Coroutines
         
-        public static IEnumerator WaitParticles(this GameObject gameObject, bool waitLoopsToo = true) {
-            if (!gameObject) yield break;
+        public static async UniTask WaitParticles(this GameObject gameObject, bool waitLoopsToo = true) {
+            if (!gameObject) return;
             
             var particleSystems = gameObject.GetComponentsInChildren<ParticleSystem>();
 
             while (particleSystems
                    .Where(ps => ps != null && (waitLoopsToo || !ps.main.loop))
                    .Any(ps => ps.particleCount > 0))
-                yield return null;
+                await UniTask.Yield();
         }
         
         #endregion

@@ -28,13 +28,17 @@ namespace Yurowm.ComposedPages {
         public override void Initialize() {
             base.Initialize();
             try {
-                Show(pageType.Emit<Page>());
+                if (pageType.GetSelectedType() != null)
+                    Show(pageType.Emit<Page>());
             } catch (Exception e) {
                 Debug.LogException(e);
             }
         }
 
-        public void Close() { }
+        public void Close() {
+            currentPage?.Clear();
+            currentPage = null;
+        }
 
         public Transform GetContainer() {
             return transform;

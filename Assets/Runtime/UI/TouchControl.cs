@@ -4,6 +4,7 @@ using UnityEngine.EventSystems;
 using System.Linq;
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Yurowm.Extensions;
 using Yurowm.Profiling;
 using Yurowm.Utilities;
@@ -80,7 +81,7 @@ namespace Yurowm.Controls {
             return !list.IsEmpty();
         }
 
-        public IEnumerator ControlRoutine(ITouchControlProvider provider) {
+        public async UniTask ControlRoutine(ITouchControlProvider provider) {
             var touches = new List<TouchStory>();
             
             Func<bool> controlIsAvaliable = () =>
@@ -88,7 +89,7 @@ namespace Yurowm.Controls {
                 && Time.timeScale != 0 && controlCamera;
 
             while (provider != null && provider.IsAliveControls()) {
-                yield return new WaitWithDelay(controlIsAvaliable, 0.2f);
+                await UniTaskEx.WaitWithDelay(controlIsAvaliable, 0.2f);
 
                 while (controlIsAvaliable()) {
                     using (YProfiler.Area("Controls")) {
@@ -118,7 +119,8 @@ namespace Yurowm.Controls {
                         }
                         #endregion
                     }
-                    yield return null;
+                    
+                    await UniTask.Yield();
                 }
             }
         }
