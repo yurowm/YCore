@@ -39,7 +39,7 @@ namespace Yurowm.Core {
             base.Serialize(writer);
         }
 
-        public void Deserialize(Reader reader) {
+        public void Deserialize(IReader reader) {
             ID = reader.Read<string>("ID");
             base.Deserialize(reader);
         }

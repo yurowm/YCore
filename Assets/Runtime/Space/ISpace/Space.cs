@@ -5,6 +5,7 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Scripting;
+using UnityEngine.Serialization;
 using Yurowm.ContentManager;
 using Yurowm.Controls;
 using Yurowm.Coroutines;
@@ -40,6 +41,7 @@ namespace Yurowm.Spaces {
         }
         
         public Clickables clickables = new();
+        public TaskDisposables taskDisposables = new();
         
         [OnLaunch]
         static void InitializeOnLoad() {
@@ -300,6 +302,7 @@ namespace Yurowm.Spaces {
             if (this is IUIRefresh refresh)
                 UIRefresh.Remove(refresh);
                 
+            taskDisposables.Dispose();
             onDestroy?.Invoke();
             
             context.Destroy();

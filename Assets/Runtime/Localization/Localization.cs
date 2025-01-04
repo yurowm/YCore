@@ -214,7 +214,7 @@ namespace Yurowm.Localizations {
         #region Supported Languages
         
         public static async UniTask<Language[]> GetSupportedLanguagesProgess() {
-            var raw = await TextData.LoadTextRoutine(Path.Combine("Languages", iniFileName));
+            var raw = await TextData.LoadTextTask(Path.Combine("Languages", iniFileName));
 
             if (raw.IsNullOrEmpty())
                 return Array.Empty<Language>();
@@ -265,7 +265,7 @@ namespace Yurowm.Localizations {
         #endregion
 
         public static async UniTask<LanguageContent> LoadProcess(Language language, bool createNew) {
-            string raw = await TextData.LoadTextRoutine(
+            string raw = await TextData.LoadTextTask(
                 Path.Combine("Languages", language + Serializer.FileExtension));
             
             return Load(raw, language, createNew);

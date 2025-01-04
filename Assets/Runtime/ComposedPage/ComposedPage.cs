@@ -253,6 +253,7 @@ namespace Yurowm.ComposedPages {
                 UIRefresh.Remove(refresh);
             elements.ForEach(e => e.gameObject.SetActive(false));
             visible = false;
+            onHide?.Invoke();
         }
 
         public void Clear() {
@@ -261,6 +262,7 @@ namespace Yurowm.ComposedPages {
         }
 
         public Action onClose = delegate {};
+        public Action onHide = delegate {};
         
         public void Close() {
             if (pageManager != null && pageManager.GetCurrentPage() == this)

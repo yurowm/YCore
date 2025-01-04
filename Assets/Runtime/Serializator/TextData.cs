@@ -82,7 +82,7 @@ namespace Yurowm.Serialization {
         
         [QuickCommand("loadtext", "Data/Pages.json", "Load StreamingAssets/Data/Pages.ys file and show text")]
         static async UniTask LoadTextCommand(string path) {
-            var result = await LoadTextRoutine(path);
+            var result = await LoadTextTask(path);
             
             if (result.IsNullOrEmpty())
                 YConsole.Error("The file is empty or doesn't exist");
@@ -136,7 +136,7 @@ namespace Yurowm.Serialization {
             #endif
         }
         
-        public static async UniTask<string> LoadTextRoutine(string path, TextCatalog catalog = TextCatalog.StreamingAssets) {
+        public static async UniTask<string> LoadTextTask(string path, TextCatalog catalog = TextCatalog.StreamingAssets) {
             path = GetFullPath(path, catalog);
 
             if (!Application.isEditor && path.Contains("://"))

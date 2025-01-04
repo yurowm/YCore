@@ -136,7 +136,7 @@ namespace Yurowm.Serialization {
             else
                 key = CryptKey.Get(cryptKey);
             
-            var raw = await TextData.LoadTextRoutine(
+            var raw = await TextData.LoadTextTask(
                 Path.Combine("Data", "GameSettings" + Serializer.FileExtension),
                 TextCatalog.Persistent);
 

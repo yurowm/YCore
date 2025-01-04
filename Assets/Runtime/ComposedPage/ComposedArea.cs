@@ -58,8 +58,7 @@ namespace Yurowm.ComposedPages {
         }
 
         void OnDisable() {
-            if (currentPage != null)
-                currentPage.visible = false;
+            currentPage?.Hide();
         }
 
         public Page GetCurrentPage() {

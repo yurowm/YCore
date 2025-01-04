@@ -110,7 +110,7 @@ namespace Yurowm.Serialization {
         }
         
         async UniTask ReadFromFile(string fileName) {
-            var raw = await TextData.LoadTextRoutine(Path.Combine("Data", fileName), TextCatalog.Persistent);
+            var raw = await TextData.LoadTextTask(Path.Combine("Data", fileName), TextCatalog.Persistent);
             
             if (!raw.IsNullOrEmpty()) {
                 if (Key != null)

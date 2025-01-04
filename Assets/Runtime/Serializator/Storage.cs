@@ -56,7 +56,7 @@ namespace Yurowm.Serialization {
         }
         
         public async UniTask<string> GetSource() {
-            var source = await TextData.LoadTextRoutine(Path.Combine("Data", fileName), catalog);
+            var source = await TextData.LoadTextTask(Path.Combine("Data", fileName), catalog);
             
             if (!source.IsNullOrEmpty() && catalog == TextCatalog.StreamingAssets && !Application.isEditor)
                 source = source.Decrypt();

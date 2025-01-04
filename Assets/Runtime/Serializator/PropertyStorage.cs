@@ -49,7 +49,7 @@ namespace Yurowm.Serialization {
         }
 
         public static async UniTask Load(IPropertyStorage storage) {
-            var raw = await TextData.LoadTextRoutine(Path.Combine("Data", storage.FileName), 
+            var raw = await TextData.LoadTextTask(Path.Combine("Data", storage.FileName), 
                 storage.Catalog);
             
             Load(storage, raw);
@@ -90,7 +90,7 @@ namespace Yurowm.Serialization {
         }
         
         public static async UniTask<string> GetSource(IPropertyStorage storage) {
-            return await TextData.LoadTextRoutine(Path.Combine("Data", storage.FileName), storage.Catalog);
+            return await TextData.LoadTextTask(Path.Combine("Data", storage.FileName), storage.Catalog);
         }
     }
 

@@ -359,7 +359,7 @@ namespace Yurowm.Serialization {
         }
         
         public virtual void Apply() {
-            storage.Apply().GetAwaiter().GetResult();
+            storage.Apply().Complete();
         }
 
         protected virtual void OnItemsContextMenu(GenericMenu menu, S[] items) { }
