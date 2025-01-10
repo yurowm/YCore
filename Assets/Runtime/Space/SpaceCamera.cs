@@ -34,11 +34,8 @@ namespace Yurowm.Spaces {
         }
         
         
-        public Vector2 viewSize => new Vector2(viewSizeHorizontal, viewSizeVertical);
+        public Vector2 viewSize => new(viewSizeHorizontal, viewSizeVertical);
 
-        /// <summary>
-        /// Раньше было просто viewSize. Сейчас это вектор
-        /// </summary>
         public float viewSizeVertical {
             get {
                 if (camera != null) 

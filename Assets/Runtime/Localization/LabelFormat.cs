@@ -9,14 +9,24 @@ using System.Collections;
 using Yurowm.Extensions;
 
 namespace Yurowm.UI {
-    public class LabelFormat : LabelTextProviderBehaviour {
+    public class LabelFormat : LabelTextProviderBehaviour, ILocalizedComponent {
 
         [HideInInspector]
+        public bool localized = false;
+        [HideInInspector]
         public string format = "";
+        [HideInInspector]
+        public string localizationKey = "";
         
         public int crop = 0;
 
-        public string Format => format;
+        public string Format {
+            get {
+                if (localized)
+                    return Localization.content?[localizationKey] ?? format;
+                return format;
+            }
+        }
 
         Dictionary<string, string> dictionary = new Dictionary<string, string>();
 
@@ -29,7 +39,9 @@ namespace Yurowm.UI {
         }
 
         public void SetText(LocalizedText text) {
+            localized = text.localized;
             format = text.text;
+            localizationKey = text.key;
             SetDirty();
         }
         
@@ -58,7 +70,7 @@ namespace Yurowm.UI {
                 
                 if (word.Key.StartsWith("@")) {
                     var key = word.Key[1..];
-                    value = ReferenceValues.Get(key)?.ToString() ?? "";
+                    value = ReferenceValues.Get(key).ToString();
                 }
                 
                 result = result.Replace("{" + word.Key + "}", value ?? string.Empty);
@@ -69,5 +81,16 @@ namespace Yurowm.UI {
             
             return result;
         }
+
+        #region ILocalizedComponent
+        public IEnumerable GetLocalizationKeys() {
+            if (localized)
+                yield return localizationKey;
+        }
+        #endregion
+    }
+    
+    public class LocalizationKeyAttribute: PropertyAttribute {
+        
     }
 }

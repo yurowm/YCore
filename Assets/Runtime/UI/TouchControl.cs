@@ -151,11 +151,11 @@ namespace Yurowm.Controls {
             } else
                 touch = touches[0];
 
-            Vector2 screenPosition = Input.mousePosition.To2D(Asix3D.XY);
+            var screenPosition = Input.mousePosition.To2D(Asix3D.XY);
             touch.deltaScreenPosition = screenPosition - touch.currentScreenPosition;
             touch.currentScreenPosition = screenPosition;
 
-            Vector2 worldPosition = ScreenToWorldPosition(screenPosition);
+            var worldPosition = ScreenToWorldPosition(screenPosition);
             touch.deltaWorldPosition = worldPosition - touch.currentWorldPosition;
             touch.currentWorldPosition = worldPosition;
             

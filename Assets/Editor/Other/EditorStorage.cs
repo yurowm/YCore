@@ -124,7 +124,7 @@ namespace Yurowm.Utilities {
         }
         
         void Save() {
-            var raw = Serializator.ToTextData(this, true);
+            var raw = Serializer.Instance.Serialize(this);
             
             if (!fileInfo.Directory.Exists)
                 fileInfo.Directory.Create();
@@ -137,7 +137,7 @@ namespace Yurowm.Utilities {
             if (fileInfo.Exists) {
                 try {
                     string raw = File.ReadAllText(fileInfo.FullName);
-                    Serializator.FromTextData(Instance, raw);
+                    Serializer.Instance.Deserialize(Instance, raw);
                 } catch (Exception) {}
             }
         }

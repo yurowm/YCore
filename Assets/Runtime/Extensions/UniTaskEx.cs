@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -45,9 +46,11 @@ namespace Yurowm.Extensions {
     public struct TaskStopable {
         readonly UniTask task;
         CancellationTokenSource cts;
+        readonly Guid id;
         
         public TaskStopable(UniTask task) {
             cts = new ();
+            id = Guid.NewGuid();
             this.task = task.AttachExternalCancellation(cts.Token);
         }
         
@@ -62,22 +65,46 @@ namespace Yurowm.Extensions {
             cts = null;
         }
 
+        public override bool Equals(object obj) {
+            if (obj is TaskStopable ts)
+                return id == ts.id;
+            return false;
+        }
+
+        public override int GetHashCode() => id.GetHashCode();
     }
     
     public class TaskDisposables : IDisposable {
         readonly CancellationTokenSource cts = new();
+        List<TaskStopable> stopables = new();
+
         private bool _isDisposed;
 
+        public TaskStopable Add(TaskStopable task) {
+            if (_isDisposed)
+                throw new ObjectDisposedException(nameof(TaskDisposables));
+        
+            stopables.Add(task);
+            return task;
+        }
+        
         public UniTask Add(UniTask task) {
             if (_isDisposed)
                 throw new ObjectDisposedException(nameof(TaskDisposables));
         
             return task.AttachExternalCancellation(cts.Token);
         }
+        
+        public void Stop(TaskStopable task) {
+            task.Stop();
+            stopables.RemoveAll(t => !t.IsActive());
+        }
 
         public void Dispose() {
             cts.Cancel();
             cts.Dispose();
+            stopables.ForEach(t => t.Stop());
+            stopables.Clear();
             _isDisposed = true;
         }
     }

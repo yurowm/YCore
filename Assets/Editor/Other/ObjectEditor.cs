@@ -10,6 +10,7 @@ using Yurowm.GUIStyles;
 using Yurowm.Icons;
 using Yurowm.Serialization;
 using Yurowm.Utilities;
+using Yurowm.YJSONSerialization;
 
 namespace Yurowm.ObjectEditors {
     public abstract class ObjectEditor {
@@ -220,14 +221,16 @@ namespace Yurowm.Editors {
                 menu.AddItem(new GUIContent($"Clipboard/Copy"), false, () => {
                     var container = new SerializableContainer<ISerializable>();
                     container.items.AddRange(list.CastIfPossible<ISerializable>());
-                    EditorGUIUtility.systemCopyBuffer = container.ToRaw();
+                    EditorGUIUtility.systemCopyBuffer = container.ToJson();
                 });
-                
-                var reference = Serializator.FromTextData<SerializableContainer<ISerializable>>(EditorGUIUtility.systemCopyBuffer);
-                
-                if (reference != null)
-                    menu.AddItem(new GUIContent($"Clipboard/Paste"), false, () => 
-                        list.AddRange(reference.items.CastIfPossible<T>()));
+
+                try {
+                    var reference = Serializer.Instance.Deserialize(EditorGUIUtility.systemCopyBuffer) as SerializableContainer<ISerializable>;
+
+                    if (reference != null)
+                        menu.AddItem(new GUIContent($"Clipboard/Paste"), false, () => 
+                            list.AddRange(reference.items.CastIfPossible<T>()));
+                } catch (Exception) { }
                 
                 if (menu.GetItemCount() > 0)
                     menu.ShowAsContext();
@@ -339,7 +342,7 @@ namespace Yurowm.Editors {
                     void Paste(string data) {
                         var ID = (serializable as ISerializableID)?.ID;
                         
-                        Serializator.FromTextData(serializable, data);
+                        Serializer.Instance.Deserialize(serializable, data);
                         
                         if (serializable is ISerializableID sID)
                             sID.ID = ID;
@@ -354,18 +357,18 @@ namespace Yurowm.Editors {
                     
                     AddItem("Copy", () => {
                         clipboard = serializable;
-                        EditorGUIUtility.systemCopyBuffer = clipboard.ToRaw();
+                        EditorGUIUtility.systemCopyBuffer = clipboard.ToJson();
                     });
 
                     AddItem("Paste/From Reference",
                         clipboard != null && clipboard.GetType() == serializable.GetType() ? 
-                        () => Paste(clipboard.ToRaw()) : default(GenericMenu.MenuFunction));
+                        () => Paste(clipboard.ToJson()) : default(GenericMenu.MenuFunction));
                     
-                    var systemCopyBufferRef = Serializator.FromTextData(EditorGUIUtility.systemCopyBuffer);
+                    var systemCopyBufferRef = Serializer.Instance.Deserialize(EditorGUIUtility.systemCopyBuffer);
                     
                     AddItem("Paste/From System Copy Buffer",
                         systemCopyBufferRef != null && systemCopyBufferRef.GetType() == serializable.GetType() ? 
-                            () => Paste(systemCopyBufferRef.ToRaw()) : default(GenericMenu.MenuFunction));
+                            () => Paste(systemCopyBufferRef.ToJson()) : default(GenericMenu.MenuFunction));
 
                     menu.ShowAsContext();
                 }

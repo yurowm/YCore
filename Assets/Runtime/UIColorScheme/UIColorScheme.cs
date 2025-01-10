@@ -60,7 +60,7 @@ namespace Yurowm.Colors {
         public void Serialize(IWriter writer) {
             writer.Write("ID", ID);
             writer.Write("storageElementFlags", storageElementFlags);
-            writer.Write("colors", colors.Values
+            writer.WriteDictionary("colors", colors.Values
                 .Where(p => !p.key.IsNullOrEmpty())
                 .GroupBy(p => p.key)
                 .ToDictionary(

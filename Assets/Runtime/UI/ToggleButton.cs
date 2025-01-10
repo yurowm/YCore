@@ -14,6 +14,8 @@ namespace Yurowm {
         public Func<bool> getState;
         public Action<bool> setState;
         
+        public float animationSpeed = 4;
+        
         bool State {
             get => getState?.Invoke() ?? false;
             set => setState?.Invoke(value);
@@ -43,7 +45,7 @@ namespace Yurowm {
             var targetTime = state ? 1f : 0f;
 
             while (seed == animationSeed && targetTime != sampler.Time) {
-                sampler.Time = sampler.Time.MoveTowards(targetTime, Time.unscaledDeltaTime * 4f);
+                sampler.Time = sampler.Time.MoveTowards(targetTime, Time.unscaledDeltaTime * animationSpeed);
                 await UniTask.Yield();
             }
         }

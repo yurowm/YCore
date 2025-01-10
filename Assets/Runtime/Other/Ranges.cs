@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using Yurowm.Serialization;
 
 namespace Yurowm.Utilities {
     [Serializable]

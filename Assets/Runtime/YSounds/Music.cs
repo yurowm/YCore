@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Yurowm.Serialization;
 
 namespace Yurowm.Sounds {
@@ -10,7 +11,11 @@ namespace Yurowm.Sounds {
             if (clip)
                 SoundController.PlayMusic(clip);
         }
-        
+
+        public override IEnumerable<string> GetAllPath() {
+            yield break;
+        }
+
         public override void Serialize(IWriter writer) {
             base.Serialize(writer);
             writer.Write("clipName", clipName);

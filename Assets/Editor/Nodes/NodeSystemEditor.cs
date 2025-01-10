@@ -8,6 +8,7 @@ using Yurowm.GUIHelpers;
 using Yurowm.ObjectEditors;
 using Yurowm.Serialization;
 using Yurowm.Utilities;
+using Yurowm.YJSONSerialization;
 
 namespace Yurowm.Nodes.Editor {
     public class NodeSystemEditor {
@@ -49,9 +50,9 @@ namespace Yurowm.Nodes.Editor {
                 }
                 if (Event.current.command) {
                     if (Event.current.keyCode == KeyCode.C) {
-                        nodeReference = focusedNodes
+                        nodeReference.items = focusedNodes
                             .Select(nd => nd.node)
-                            .ToArray();
+                            .ToList();
                     }
                     if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.V) {
                         Paste();
@@ -273,8 +274,8 @@ namespace Yurowm.Nodes.Editor {
                 }   
             }
             
-            if (!nodeReference.IsEmpty())
-                if (supportedTypes.Any(t => nodeReference.Any(t.IsInstanceOfType)))
+            if (!nodeReference.items.IsEmpty())
+                if (supportedTypes.Any(t => nodeReference.items.Any(t.IsInstanceOfType)))
                     menu.AddItem(new GUIContent("Paste"), false, Paste);
 
             #endregion
@@ -292,6 +293,7 @@ namespace Yurowm.Nodes.Editor {
             var supportedTypes = nodeSystem.GetSupportedNodeTypes().ToArray();
             
             var toPaste = nodeReference
+                .items
                 .Where(n => supportedTypes.Any(t => t.IsInstanceOfType(n)))
                 .ToArray();
                     
@@ -548,20 +550,20 @@ namespace Yurowm.Nodes.Editor {
         
         #endregion
 
-        static Node[] nodeReference;
+        static SerializableContainer<Node> nodeReference = new ();
         
         public virtual void OnNodeContextMenu(Node node, GenericMenu menu) {
             if (!nodeSystem.GetSupportedNodeTypes().Any(t => t.IsInstanceOfType(node)))
                 return;
             
             menu.AddItem(new GUIContent("Copy"), false, () => 
-                nodeReference = focusedNodes.Select(d => d.node).ToArray());
+                nodeReference.items = focusedNodes.Select(d => d.node).ToList());
             
-            if (nodeReference != null && nodeReference.GetType() == node.GetType())
+            if (!nodeReference.items.IsEmpty() && nodeReference.items.First().GetType() == node.GetType())
                 menu.AddItem(new GUIContent("Paste Values"), false, () => {
                     var id = node.ID;
                     var position = node.position;
-                    Serializator.FromTextData(node, Serializator.ToTextData(nodeReference));
+                    Serializer.Instance.Deserialize(node, Serializer.Instance.Serialize(nodeReference.items.First()));
                     node.ID = id;
                     node.position = position;
                 });

@@ -12,6 +12,7 @@ namespace Yurowm {
         } 
         
         public static void PlayClip(this Component component, string clipName) {
+            if (!component) return;
             using (ExtensionsUnityEngine.ProfileSample("PlayClip"))
                 PlayClip(component?.gameObject, clipName);
         } 

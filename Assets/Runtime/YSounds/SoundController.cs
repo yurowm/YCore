@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -174,6 +175,33 @@ namespace Yurowm.Sounds {
             return AssetManager.GetAsset<AudioClip>(name);
         }
         
+        #endregion
+
+        #region Extra
+        
+        public static Action<bool> onMuteChanged = delegate{};
+        
+        static HashSet<object> muters = new();
+
+        public static void MuteWith(object obj, bool status) {
+            if (status && muters.Add(obj))
+                onMuteChanged?.Invoke(status);
+            
+            if (!status && muters.Remove(obj))
+                onMuteChanged?.Invoke(status);
+        }
+        
+        public static bool IsMute() => muters.Any();
+
+        public const string RootFolderName = "Sounds";
+
+        public static string GetHapticFullPath(string hapticPath) {
+            if (hapticPath.IsNullOrEmpty())
+                return null;
+            
+            return $"Sounds/{hapticPath}.ahap";
+        } 
+
         #endregion
     }
 }

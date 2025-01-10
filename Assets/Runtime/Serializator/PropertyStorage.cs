@@ -10,6 +10,7 @@ using UnityEngine.Scripting;
 using Yurowm.Coroutines;
 using Yurowm.Extensions;
 using Yurowm.Utilities;
+using Yurowm.YJSONSerialization;
 
 namespace Yurowm.Serialization {
     public static class PropertyStorage {
@@ -32,7 +33,7 @@ namespace Yurowm.Serialization {
         }
         
         public static void Save(IPropertyStorage storage) {
-            string raw = Serializator.ToTextData(storage, true);
+            string raw = Serializer.Instance.Serialize(storage);
             if (storage.Catalog == TextCatalog.StreamingAssets && !Application.isEditor)
                 raw = raw.Encrypt();
             TextData.SaveText(Path.Combine("Data", storage.FileName), raw, storage.Catalog);
@@ -45,7 +46,7 @@ namespace Yurowm.Serialization {
             if (storage.Catalog == TextCatalog.StreamingAssets && !Application.isEditor)
                 raw = raw.Decrypt();
                 
-            Serializator.FromTextData(storage, raw);
+            Serializer.Instance.Deserialize(storage, raw);
         }
 
         public static async UniTask Load(IPropertyStorage storage) {

@@ -159,7 +159,7 @@ namespace Yurowm.Localizations {
                     yield return key;
         }
     }
-
+    
     public class LocalizationSettings : SettingsModule {
         
         public Language language = Language.Unknown;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Yurowm.Extensions;
 using Yurowm.Serialization;
@@ -35,6 +36,10 @@ namespace Yurowm.Sounds {
             Debug.Log(clipName);
             
             SoundController.PlayEffect(clip, 1);
+        }
+
+        public override IEnumerable<string> GetAllPath() {
+            yield break;
         }
 
         public override void Serialize(IWriter writer) {

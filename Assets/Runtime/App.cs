@@ -144,8 +144,7 @@ namespace Yurowm.Core {
             if (Application.isEditor) {
                 var aspectRatio = 1f * resolution.x / resolution.y;
                 if (aspectRatio < 1) aspectRatio = 1f / aspectRatio;
-                
-                return aspectRatio < 16f / 9f;
+                return aspectRatio.Round(2) < (16f / 9f).Round(2);
             }
             
             return false;

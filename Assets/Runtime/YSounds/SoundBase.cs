@@ -22,6 +22,8 @@ namespace Yurowm.Sounds {
         
         public string sePath { get; set; }
         
+        public abstract IEnumerable<string> GetAllPath();
+        
         public virtual void Serialize(IWriter writer) {
             writer.Write("ID", ID);
             writer.Write("tag", tag);

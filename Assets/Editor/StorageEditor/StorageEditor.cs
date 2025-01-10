@@ -18,6 +18,7 @@ using Yurowm.InUnityReporting;
 using Yurowm.ObjectEditors;
 using Yurowm.Spaces;
 using Yurowm.Utilities;
+using Yurowm.YJSONSerialization;
 
 namespace Yurowm.Serialization {
     public abstract class StorageEditor<S> : DashboardEditor, IStorageEditor where S : class, ISerializable {
@@ -217,7 +218,7 @@ namespace Yurowm.Serialization {
                                     
                                     BaseTypesEditor.OnSelectTypeGUI<S>("Type", type, t => {
                                         var newItem = Activator.CreateInstance(t) as S;
-                                        Serializator.FromTextData(newItem, item.ToRaw());
+                                        Serializer.Instance.Deserialize(newItem, item.ToJson());
                                         Replace(item, newItem);
                                     }, false);
                                     
@@ -293,6 +294,17 @@ namespace Yurowm.Serialization {
         }
         
         protected virtual void OnOtherContextMenu(GenericMenu menu) {
+            menu.AddItem(new GUIContent("Load legacy"), false, () => {
+                tags.Clear();
+                var z = storage.ser;
+                storage.ser = Serializator.GetSerializer();
+                storage.Load().Complete();
+                storage.ser = z;
+                storage.items.ForEach(UpdateTags);
+                Sort();
+                list.itemCollection = storage.items;
+                list.Reload();
+            });
             menu.AddItem(new GUIContent("Reset"), false, () => {
                 tags.Clear();
                 storage.Load().Complete();
@@ -303,7 +315,7 @@ namespace Yurowm.Serialization {
             });
             
             menu.AddItem(new GUIContent("Raw Data/Save to System Buffer"), false, () => {
-                EditorGUIUtility.systemCopyBuffer = Serializator.ToTextData(storage);
+                EditorGUIUtility.systemCopyBuffer = Serializer.Instance.Serialize(storage);
             });
             
             menu.AddItem(new GUIContent("Raw Data/Source to System Buffer"), false, async () =>
@@ -312,9 +324,9 @@ namespace Yurowm.Serialization {
             menu.AddItem(new GUIContent("Raw Data/Inject (Hard)"), false, () => {
                 try {
                     var raw = EditorGUIUtility.systemCopyBuffer;
-                    var reference = Serializator.FromTextData(raw);
+                    var reference = Serializer.Instance.Deserialize(raw);
                     if (reference != null && reference.GetType() == storage.GetType()) {
-                        Serializator.FromTextData(storage, raw);
+                        Serializer.Instance.Deserialize(storage, raw);
                         Sort();
                         list.itemCollection = storage.items;
                         list.Reload();
@@ -329,7 +341,7 @@ namespace Yurowm.Serialization {
             menu.AddItem(new GUIContent("Raw Data/Inject (Soft)"), false, () => {
                 try {
                     var raw = EditorGUIUtility.systemCopyBuffer;
-                    var reference = Serializator.FromTextData(raw);
+                    var reference = Serializer.Instance.Deserialize(raw);
                     if (reference != null && reference.GetType() == storage.GetType()) {
                         foreach (var rItem in (Storage<S>) reference) {
                             if (rItem is ISerializableID sid) {
@@ -607,12 +619,12 @@ namespace Yurowm.Serialization {
             try {
                 string raw = null;
                 if (item is ISerializable s1) 
-                    raw = Serializator.ToTextData(s1);
+                    raw = Serializer.Instance.Serialize(s1);
 
                 item = Activator.CreateInstance(type);
                         
                 if (!raw.IsNullOrEmpty() && item is ISerializable s2)
-                    Serializator.FromTextData(s2, raw);
+                    Serializer.Instance.Deserialize(s2, raw);
                 
                 Repaint();
             } catch (Exception e) {

@@ -104,7 +104,7 @@ namespace Yurowm.Serialization {
         }
 
         public void Save() {
-            string raw = Serializator.ToTextData(this);
+            string raw = Serializer.Instance.Serialize(this);
             if (KEY != null)
                 raw = raw.Encrypt(KEY);
             
@@ -144,7 +144,7 @@ namespace Yurowm.Serialization {
                 if (key != null)
                     raw = raw.Decrypt(key);
                 
-                Serializator.FromTextData(Instance, raw);
+                Serializer.Instance.Deserialize(Instance, raw);
             }
             
             Instance.KEY = key;

@@ -25,6 +25,7 @@ using Yurowm.Integrations;
 using Yurowm.ObjectEditors;
 using Yurowm.Serialization;
 using Yurowm.Services;
+using Yurowm.UI;
 using Yurowm.Utilities;
 using Yurowm.YJSONSerialization;
 
@@ -965,7 +966,7 @@ namespace Yurowm.Localizations {
             content.Reuse(reader.ReadDictionary<string>("content"));
         }
     }
-    
+
     public class LocalizationObjectEditor : ObjectEditor {
         Language language;
 

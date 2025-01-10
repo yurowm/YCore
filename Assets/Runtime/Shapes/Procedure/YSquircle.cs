@@ -25,8 +25,8 @@ namespace Yurowm.Shapes {
             var step = 90f / (order.details - 1);
             
             var corner = order.corner
-                .ClampMax(order.size.x / 2)
-                .ClampMax(order.size.y / 2);
+                .ClampMax(order.size.x / 2 - 0.01f)
+                .ClampMax(order.size.y / 2 - 0.01f);
             
             var edges = order.size / 2 - Vector2.one * corner;
             var vector = new Vector2(

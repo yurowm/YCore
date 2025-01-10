@@ -11,6 +11,7 @@ using Yurowm.GUIStyles;
 using Yurowm.Icons;
 using Yurowm.InUnityReporting;
 using Yurowm.ObjectEditors;
+using Yurowm.YJSONSerialization;
 
 namespace Yurowm.Serialization {
     public abstract class PropertyStorageEditor : DashboardEditor {
@@ -94,7 +95,7 @@ namespace Yurowm.Serialization {
             menu.AddItem(new GUIContent("Reset"), false, () => Load().Forget());
             
             menu.AddItem(new GUIContent("Raw Data/Save to System Buffer"), false, () => 
-                EditorGUIUtility.systemCopyBuffer = Serializator.ToTextData(storage));
+                EditorGUIUtility.systemCopyBuffer = Serializer.Instance.Serialize(storage));
             
             menu.AddItem(new GUIContent("Raw Data/Source to System Buffer"), false, async () => 
                 EditorGUIUtility.systemCopyBuffer = await PropertyStorage.GetSource(storage));
@@ -102,9 +103,9 @@ namespace Yurowm.Serialization {
             menu.AddItem(new GUIContent("Raw Data/Inject"), false, () => {
                 try {
                     var raw = EditorGUIUtility.systemCopyBuffer;
-                    var reference = Serializator.FromTextData(raw);
+                    var reference = Serializer.Instance.Deserialize(raw);
                     if (reference != null && reference.GetType() == storage.GetType()) {
-                        Serializator.FromTextData(storage, raw);
+                        Serializer.Instance.Deserialize(storage, raw);
                         Debug.Log("Successfully Injected");
                     }
                 } catch (Exception e) {

@@ -234,8 +234,8 @@ namespace Yurowm {
             
             result += $"({GetType().Name})";
             
-            if (random != null)
-                result += $" r{random.seed}";
+            if (_random != null)
+                result += $" r{_random.seed}";
             
             return result;
         }

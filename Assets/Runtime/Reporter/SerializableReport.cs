@@ -1,6 +1,8 @@
 ﻿using System;
 using UnityEngine;
 using Yurowm.Serialization;
+using Yurowm.YJSONSerialization;
+using Reader = Yurowm.Serialization.Reader;
 
 namespace Yurowm.InUnityReporting {
     public class SerializableReport : Report {
@@ -17,7 +19,7 @@ namespace Yurowm.InUnityReporting {
         
         public override bool Refresh() {
             try {
-                string raw = Serializator.ToTextData(target);
+                string raw = Serializer.Instance.Serialize(target);
                 entry = Reader.Parse(raw);
                 return true;
             } catch (Exception e) {

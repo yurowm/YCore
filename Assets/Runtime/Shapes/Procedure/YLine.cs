@@ -152,7 +152,9 @@ namespace Yurowm.Shapes {
             var totalLength = 0f;
             for (var i = order.start + 1; i <= order.end; i++) 
                 totalLength += (points[i] - points[i - 1]).FastMagnitude();
-            
+            if (order.loop)
+                totalLength += (points[0] - points[^1]).FastMagnitude();
+
             if (points[order.start] == points[order.end]) {
                 order.end --;
                 order.loop = true;
@@ -261,8 +263,8 @@ namespace Yurowm.Shapes {
                 triangles.Add(new Triangle(vi - 3, vi - 2, vi - 1));
 
                 length += (order.points[order.end] - order.points[order.start]).FastMagnitude();
-                uv.Add(new Vector2(1, length));
-                uv.Add(new Vector2(0, length));
+                uv.Add(new Vector2(1, length / totalLength));
+                uv.Add(new Vector2(0, length / totalLength));
 
                 if (order.directionNormals) {
                     var normal = new Vector3(0, 0, ((order.points[order.start] - order.points[order.end]).Angle(false) + 90) * Mathf.Deg2Rad);

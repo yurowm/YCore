@@ -80,7 +80,7 @@ namespace Yurowm.Serialization {
                 File.Delete(file.FullName);
         }
         
-        [QuickCommand("loadtext", "Data/Pages.json", "Load StreamingAssets/Data/Pages.ys file and show text")]
+        [QuickCommand("loadtext", "Data/Pages.json", "Load StreamingAssets/Data/Pages.json file and show text")]
         static async UniTask LoadTextCommand(string path) {
             var result = await LoadTextTask(path);
             

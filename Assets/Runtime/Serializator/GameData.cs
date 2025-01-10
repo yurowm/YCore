@@ -116,7 +116,7 @@ namespace Yurowm.Serialization {
                 if (Key != null)
                     raw = raw.Decrypt(Key);
                 
-                Serializator.FromTextData(this, raw);
+                Serializer.Instance.Deserialize(this, raw);
             }
             
             Initialize();
@@ -125,7 +125,7 @@ namespace Yurowm.Serialization {
         void Save(string fileName) {
             isDirty = false;
             
-            string raw = Serializator.ToTextData(this);
+            string raw = Serializer.Instance.Serialize(this);
             
             if (Key != null)
                 raw = raw.Encrypt(Key);
@@ -164,7 +164,7 @@ namespace Yurowm.Serialization {
         public string ToServerRaw() {
             var data = new GameData();
             data.modules.Reuse(modules.Where(m => m is IServerDataModule));
-            return Serializator.ToTextData(data, false);
+            return Serializer.Instance.Serialize(data);
         }
         
         #endregion

@@ -105,6 +105,10 @@ namespace Yurowm.Colors {
         void SetMesh(Mesh mesh);
     }
     
+    public interface IRepaintSetSprite {
+        void SetSprite(Sprite sprite);
+    }
+    
     public interface IRepaintByContext {
         void Repaint(LiveContext fieldContext);
     }
@@ -126,6 +130,12 @@ namespace Yurowm.Colors {
             foreach (var component in gameObject.GetComponentsInChildren<Repaint>(true))
                 if (component is IRepaintSetShape setColor)
                     setColor.SetMesh(meshData);
+        }
+        
+        public static void Repaint(this GameObject gameObject, Sprite sprite) {
+            foreach (var component in gameObject.GetComponentsInChildren<Repaint>(true))
+                if (component is IRepaintSetSprite setSprite)
+                    setSprite.SetSprite(sprite);
         }
     }
     

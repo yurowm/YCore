@@ -55,6 +55,19 @@ namespace Yurowm.Shapes {
             get => _Size;
         }
         
+        [SerializeField]
+        bool _TransformSize = false;
+        public bool TransformSize {
+            set {
+                if (value == _TransformSize) return;
+                _TransformSize = value;
+                Rebuild();
+            }
+            get => _TransformSize;
+        }
+        
+        RectTransform rectTransform;
+        
         public void Rebuild() {
             if (line != null || this.SetupComponent(out line)) {
                 var order = new YSquircle.Order {
@@ -63,9 +76,17 @@ namespace Yurowm.Shapes {
                     corner = _Corner,
                     details = _Details,
                 };
+                if (TransformSize)
+                    if (rectTransform || this.SetupComponent(out rectTransform))
+                        order.size = rectTransform.rect.size;
                 line.GetLine().SetPoints(squircle.GetPoints(order));
                 line.SetDirty();
             }
+        }
+
+        void OnRectTransformDimensionsChange() {
+            if (TransformSize)
+                Rebuild();
         }
 
         void OnValidate() {

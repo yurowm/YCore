@@ -43,7 +43,7 @@ namespace Yurowm.Serialization {
         public Storage(string fileName, TextCatalog catalog, ISerializer serializer = null) {
             this.fileName = fileName + Serializer.FileExtension;
             this.catalog = catalog;
-            this.serializer = serializer ?? Serializator.GetSerializer();
+            this.serializer = serializer ?? Serializer.Instance;
         }
 
         public async UniTask Apply() {
@@ -62,6 +62,11 @@ namespace Yurowm.Serialization {
                 source = source.Decrypt();
             
             return source;
+        }
+        
+        public ISerializer ser {
+            set => serializer = value;
+            get => serializer;
         }
 
         public virtual async UniTask Load() {
