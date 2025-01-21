@@ -1,0 +1,4 @@
+framework module yHaptic {
+  header "yHaptic-Swift.h"
+  requires objc
+}
